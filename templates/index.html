@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block body %}
+<h1>Groups</h1>
+  {% for group in groups %}
+    <div>
+      <h2>{{ group.basic.fqin }}</h2>
+      {{ group.basic.description|safe }}
+    </div>
+  {% else %}
+    <em>Unbelievable.  No groups here so far <a href="/add">Add one</a></em>
+  {% endfor %}
+<hr/>
+<h1>Apps</h1>
+  {% for app in apps %}
+    <div>
+      <h2>{{ app.basic.fqin }}</h2>
+      {{ app.basic.description|safe }}
+    </div>
+  {% else %}
+    <em>Unbelievable.  No apps here so far <a href="/add">Add one</a></em>
+  {% endfor %}
+<hr/>
+<h1>Users</h1>
+  {% for user in users %}
+    <div>
+      <h2>{{ user.nick }}</h2>
+      {{ user.adsid }}
+    </div>
+  {% else %}
+    <em>Unbelievable.  No users here so far <a href="/add">Add one</a></em>
+  {% endfor %}
+{% endblock %}

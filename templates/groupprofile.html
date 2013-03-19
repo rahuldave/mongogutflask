@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block body %}
+	<h2>Group {{thegroup.basic.fqin}}</h2>
+    <h3>Group Info</h3>
+  <iframe src="/group/{{ thegroup.basic.fqin}}"></iframe>
+  <hr/>
+  <h3>Users</h3>
+    <h5>Users In</h5>
+  <iframe src="/group/{{ thegroup.basic.fqin}}/users"></iframe>
+
+
+{% endblock %}
