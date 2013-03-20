@@ -46,14 +46,44 @@ from flask import request, session, g, redirect, url_for, \
 #x
 @adsgut.before_request
 def before_request():
+    username=session.get('username', None)
+    print "USER", username
     w=whos.Whosdb(db)
     g.db=w
+    if not username:
+        username='adsgut'
+    #superuser if no login BUG: use only for testing
+
     #currently set to sysuser. Atherwise have user login and set.
-    g.currentuser=w.getUserForNick(None, 'adsgut')
+    g.currentuser=g.db.getUserForNick(None, username)
+
+
+@adsgut.route('/login', methods=['GET', 'POST'])
+def login():
+    error=None
+    if request.method == 'POST':
+        session['username'] = request.form['username']
+        session['logged_in'] = True
+        flash('You were logged in')
+        return redirect(url_for('index'))
+    return render_template('login.html', error=error)
+
+@adsgut.route('/logout')
+def logout():
+    # remove the username from the session if it's there
+    session.pop('username', None)
+    session.pop('logged_in', None)
+    flash('You were logged out')
+    return redirect(url_for('index'))
+
 
 #x
-@adsgut.route('/all')
+@adsgut.route('/')
 def index():
+    return "Hello World"
+#x
+@adsgut.route('/all')
+def all():
     groups=g.db.allGroups(g.currentuser)
     apps=g.db.allApps(g.currentuser)
     users=g.db.allUsers(g.currentuser)
