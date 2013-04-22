@@ -49,7 +49,9 @@ def before_request():
     username=session.get('username', None)
     print "USER", username
     w=whos.Whosdb(db)
+    p=posts.Postdb(db, w)
     g.db=w
+    g.dbp=p
     if not username:
         username='adsgut'
     #superuser if no login BUG: use only for testing
@@ -350,7 +352,80 @@ def appProfileHtml(appowner, appname):
     return render_template('appprofile.html', theapp=appinfo)
 
 
+#######################################################################################################################
+#######################################################################################################################
 
+def _getContext(q):
+    #BUG:user contexts will be hidden. So this will change
+    if not q.has_key('cuser'):
+        return None
+    context={}
+    if q['cuser']=="True":
+        context['user']=True
+    else:
+        context['user']=False
+    if not q.has_key('ctype'):
+        return None
+    context['type']=q['ctype']
+    if not q.has_key('cvalue'):
+        return None
+    context['value']=q['cvalue']
+    return context
+
+#The users libraries
+@adsgut.route('/user/<nick>/libsuserowns')
+def libsUserOwns(nick):
+    context=_getContext(request.args)
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    libs=g.dbp.getTagsByOwner(g.currentuser, useras, ("eq","ads/library"), context)
+    libdict={'libraries':libs}
+    return jsonify(libdict)
+
+#these are the ones user owns as well as can write to by dint of giving it to a group.
+@adsgut.route('/user/<nick>/libsusercanwriteto')
+def libsUserCanWriteTo(nick):
+    context=_getContext(request.args)
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    libs=g.dbp.getTagsAsMemberAndOwner(g.currentuser, useras, ("eq","ads/library"), context)
+    libdict={'libraries':libs}
+    return jsonify(libdict)
+
+@adsgut.route('/user/<nick>/libsasmember')
+def libsUserAsMember(nick):
+    context=_getContext(request.args)
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    libs=g.dbp.getTagsAsMemberOnly(g.currentuser, useras, ("eq","ads/library"), context)
+    libdict={'libraries':libs}
+    return jsonify(libdict)
+
+
+#these might be supersed by tagging based results to populate the left side
+
+#The users simple tags, not singletonmode (ie no notes), not libraries
+@adsgut.route('/user/<nick>/stagsuserowns')
+def sTagsUserOwns(nick):
+    context=_getContext(request.args)
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    stags=g.dbp.getTagsByOwner(g.currentuser, useras, ("ne","ads/library"), context)
+    stagdict={'simpletags':stags}
+    return jsonify(stagdict)
+
+#these are the simple tags user owns as well as can write to by dint of giving it to a group.
+@adsgut.route('/user/<nick>/stagsusercanwriteto')
+def sTagsUserCanWriteTo(nick):
+    context=_getContext(request.args)
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    stags=g.dbp.getTagsAsMemberAndOwner(g.currentuser, useras, ("ne","ads/library"), context)
+    stagdict={'simpletags':stags}
+    return jsonify(stagdict)
+
+@adsgut.route('/user/<nick>/stagsasmember')
+def sTagsUserAsMember(nick):
+    context=_getContext(request.args)
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    stags=g.dbp.getTagsAsMemberOnly(g.currentuser, useras, ("ne","ads/library"), context)
+    stagdict={'simpletags':stags}
+    return jsonify(stagdict)
 
 
 if __name__ == "__main__":
