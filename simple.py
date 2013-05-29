@@ -4,6 +4,7 @@ import os
 import sys
 import datetime
 import flask
+import simplejson
 
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
 print "ATH", sys.path
@@ -36,7 +37,7 @@ db.init_app(app)
 
 DebugToolbarExtension(app)
 
-from mongogut import whos
+from mongogut import itemsandtags
 
 adsgut=app
 
@@ -48,8 +49,8 @@ from flask import request, session, g, redirect, url_for, \
 def before_request():
     username=session.get('username', None)
     print "USER", username
-    w=whos.Whosdb(db)
-    p=posts.Postdb(db, w)
+    p=itemsandtags.Postdb(db)
+    w=p.whosdb
     g.db=w
     g.dbp=p
     if not username:
@@ -88,8 +89,9 @@ def index():
 def all():
     groups=g.db.allGroups(g.currentuser)
     apps=g.db.allApps(g.currentuser)
+    libraries=g.db.allLibraries(g.currentuser)
     users=g.db.allUsers(g.currentuser)
-    return flask.render_template('index.html', groups=groups, apps=apps, users=users)
+    return flask.render_template('index.html', groups=groups, apps=apps, users=users, libraries=libraries)
 
 #######################################################################################################################
 #######################################################################################################################
@@ -106,14 +108,14 @@ def userInfo(nick):
 #x
 @adsgut.route('/user/<nick>/profile/html')
 def userProfileHtml(nick):
-    useras=g.db.getUserInfo(g.currentuser, nick)
-    return render_template('userprofile.html', theuser=useras)
+    useras=userInfo(nick)
+    return render_template('userprofile.html', theuser=simplejson.loads(useras))
 
 #x
 @adsgut.route('/user/<nick>/groupsuserisin')
 def groupsUserIsIn(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    groups=g.db.groupsForUser(g.currentuser, useras)
+    groups=g.db.postablesForUser(g.currentuser, useras, "group")
     groupdict={'groups':groups}
     return jsonify(groupdict)
 
@@ -121,7 +123,7 @@ def groupsUserIsIn(nick):
 @adsgut.route('/user/<nick>/groupsuserowns')
 def groupsUserOwns(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    groups=g.db.ownerOfGroups(g.currentuser, useras)
+    groups=g.db.ownerOfPostables(g.currentuser, useras, "group")
     groupdict={'groups':groups}
     return jsonify(groupdict)
 
@@ -129,7 +131,7 @@ def groupsUserOwns(nick):
 @adsgut.route('/user/<nick>/groupsuserisinvitedto')
 def groupsUserIsInvitedTo(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    groups=g.db.groupInvitationsForUser(g.currentuser, useras)
+    groups=g.db.postableInvitesForUser(g.currentuser, useras, "group")
     groupdict={'groups':groups}
     return jsonify(groupdict)
 
@@ -137,7 +139,7 @@ def groupsUserIsInvitedTo(nick):
 @adsgut.route('/user/<nick>/appsuserisin')
 def appsUserIsIn(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    apps=g.db.appsForUser(g.currentuser, useras)
+    apps=g.db.postablesForUser(g.currentuser, useras, "app")
     appdict={'apps':apps}
     return jsonify(appdict)
 
@@ -145,7 +147,7 @@ def appsUserIsIn(nick):
 @adsgut.route('/user/<nick>/appsuserowns')
 def appsUserOwns(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    apps=g.db.ownerOfApps(g.currentuser, useras)
+    apps=g.db.ownerOfPostables(g.currentuser, useras, "app")
     appdict={'apps':apps}
     return jsonify(appdict)
 
@@ -154,10 +156,43 @@ def appsUserOwns(nick):
 @adsgut.route('/user/<nick>/appsuserisinvitedto')
 def appsUserIsInvitedTo(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    apps=g.db.appInvitationsForUser(g.currentuser, useras)
+    apps=g.db.postableInvitesForUser(g.currentuser, useras, "app")
     appdict={'apps':apps}
     return jsonify(appdict)
 
+
+
+@adsgut.route('/user/<nick>/librariesuserisin')
+def librariesUserIsIn(nick):
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    libs=g.db.postablesForUser(g.currentuser, useras, "library")
+    libdict={'libraries':libs}
+    return jsonify(libdict)
+
+#x
+@adsgut.route('/user/<nick>/librariesuserowns')
+def librariesUserOwns(nick):
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    libs=g.db.ownerOfPostables(g.currentuser, useras, "library")
+    libdict={'libraries':libs}
+    return jsonify(libdict)
+
+#use this for the email invitation?
+#x
+@adsgut.route('/user/<nick>/librariesuserisinvitedto')
+def librariesUserIsInvitedTo(nick):
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    libs=g.db.postableInvitesForUser(g.currentuser, useras, "library")
+    libdict={'libraries':libs}
+    return jsonify(libdict)
+
+@adsgut.route('/user/<nick>/items')
+def userItems(nick):
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    num, vals=g.dbp.getItemsForPostableQuery(g.currentuser, useras,
+       [useras.nick+"/group:default"] )
+    userdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
+    return jsonify(userdict)
 #######################################################################################################################
 #creating groups and apps
 #accepting invites.
@@ -211,20 +246,22 @@ def doInviteToGroup(groupowner, groupname):
 #This is used for addition of a user. Whats the usecase? current perms protect this
 #TODO: maybe add a bulk version? That would seem to need to be added as a pythonic API: also split there into two things in pythonic API?
 #BUG: user leakage as we do user info for all users in group. another users groups should not be obtainable
-@adsgut.route('/group/<groupowner>/group:<groupname>/users', methods=['GET', 'POST'])#user
-def addUsertoGroup_or_groupUsers(groupowner, groupname):
+#BUG: should this handle a general memberable?
+@adsgut.route('/group/<groupowner>/group:<groupname>/members', methods=['GET', 'POST'])#user
+def addMembertoGroup_or_groupMembers(groupowner, groupname):
     #add permit to match user with groupowner
     fqgn=groupowner+"/group:"+groupname
     if request.method == 'POST':
         nick=request.form.get('userthere', None)
         if not nick:
             doabort("BAD_REQ", "No User Specified")
-        user=g.db.getUserForNick(g.currentuser, nick)
-        g.db.addUserToGroup(g.currentuser, fqgn, user, None)
+        #user=g.db.getUserForNick(g.currentuser, nick)
+        g.db.addUserToPostable(g.currentuser, fqgn, nick)
         g.db.commit()
         return jsonify({'status':'OK', 'info': {'user':nick, 'group':fqgn}})
     else:
-        users=g.db.usersInGroup(g.currentuser,fqgn)
+        useras=g.currentuser
+        users=g.db.membersOfPostableFromFqin(g.currentuser,useras,fqgn)
         userdict={'users':users}
         return jsonify(userdict)
 
@@ -281,23 +318,49 @@ def doInviteToApp(appowner, appname):
 
 #Whats the use case for this? bulk app adds which dont go through invites.
 #BUG: user leakage, also, should the pythonic api part be split up into two separates?
-@adsgut.route('/app/<appowner>/app:<appname>/users', methods=['GET', 'POST'])#user
-def addUserToApp_or_appUsers(appowner, appname):
+@adsgut.route('/app/<appowner>/app:<appname>/members', methods=['GET', 'POST'])#user
+def addMemberToApp_or_appMembers(appowner, appname):
     #add permit to match user with groupowner
     fqan=appowner+"/app:"+appname
     if request.method == 'POST':
         nick=request.form.get('userthere', None)
         if not nick:
             doabort("BAD_REQ", "No User Specified")
-        user=g.db.getUserForNick(g.currentuser, nick)
-        g.db.addUserToApp(g.currentuser, fqan, user, None)
+        #user=g.db.getUserForNick(g.currentuser, nick)
+        g.db.addUserToPostable(g.currentuser, fqan, nick)
         g.db.commit()
         return jsonify({'status':'OK', 'info': {'user':nick, 'app':fqan}})
     else:
-        users=g.db.usersInApp(g.currentuser,fqan)
+        useras=g.currentuser
+        users=g.db.membersOfPostableFromFqin(g.currentuser,useras,fqan)
         userdict={'users':users}
         return jsonify(userdict)
 
+
+@adsgut.route('/library/<libraryowner>/library:<libraryname>/members', methods=['GET', 'POST'])#user
+def addMemberToLibrary_or_libraryMembers(libraryowner, libraryname):
+    #add permit to match user with groupowner
+    fqln=libraryowner+"/library:"+libraryname
+    if request.method == 'POST':
+        nick=request.form.get('userthere', None)
+        if not nick:
+            doabort("BAD_REQ", "No User Specified")
+        #user=g.db.getUserForNick(g.currentuser, nick)
+        g.db.addUserToPostable(g.currentuser, fqln, nick)
+        g.db.commit()
+        return jsonify({'status':'OK', 'info': {'user':nick, 'library':fqln}})
+    else:
+        useras=g.currentuser
+        users=g.db.membersOfPostableFromFqin(g.currentuser,useras,fqln)
+        userdict={'users':users}
+        return jsonify(userdict)
+
+#######################################################################################################################
+#######################################################################################################################
+def postable(ownernick, name, ptypestr):
+    fqpn=ownernick+"/"+ptypestr+":"+name
+    postable=g.db.getPostable(g.currentuser, fqpn)
+    return postable
 
 
 #POST/GET in a lightbox?
@@ -309,26 +372,21 @@ def creategrouphtml():
 #x
 @adsgut.route('/group/<groupowner>/group:<groupname>')
 def groupInfo(groupowner, groupname):
-    fqgn = groupowner+'/group:'+groupname
-    group=g.db.getGroupInfo(g.currentuser, fqgn)
-    return group.to_json()
+    return postable(groupowner, groupname, "group").to_json()
 
 #x
 @adsgut.route('/group/<groupowner>/group:<groupname>/profile/html')
 def groupProfileHtml(groupowner, groupname):
-    fqgn = groupowner+'/group:'+groupname
-    groupinfo=g.db.getGroupInfo(g.currentuser, fqgn)
-    return render_template('groupprofile.html', thegroup=groupinfo)
+    group=postable(groupowner, groupname, "group")
+    return render_template('groupprofile.html', thegroup=group)
 
-# @adsgut.route('/group/<username>/group:<groupname>/users')
-# def group_users(username, groupname):
-#     fqgn = username+'/group:'+groupname
-#     users=g.db.usersInGroup(g.currentuser,fqgn)
-#     return jsonify({'users':users})
-
-
-#TODO: do one for a groups apps
-
+@adsgut.route('/group/<groupowner>/group:<groupname>/items')
+def groupItems(groupowner, groupname):
+    group=postable(groupowner, groupname, "group")
+    num, vals=g.dbp.getItemsForPostableQuery(g.currentuser, g.currentuser,
+       [group.basic.fqin] )
+    groupdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
+    return jsonify(groupdict)
 #######################################################################################################################
 #######################################################################################################################
 
@@ -340,17 +398,47 @@ def createapphtml():
 #x
 @adsgut.route('/app/<appowner>/app:<appname>')
 def appInfo(appowner, appname):
-    fqan = appowner+'/app:'+appname
-    app=g.db.getAppInfo(g.currentuser, fqan)
-    return app.to_json()
+    return postable(appowner, appname, "app").to_json()
 
 #x
 @adsgut.route('/app/<appowner>/app:<appname>/profile/html')
 def appProfileHtml(appowner, appname):
-    fqan = appowner+'/app:'+appname
-    appinfo=g.db.getAppInfo(g.currentuser, fqan)
-    return render_template('appprofile.html', theapp=appinfo)
+    app=postable(appowner, appname, "app")
+    return render_template('appprofile.html', theapp=app)
 
+@adsgut.route('/app/<appowner>/app:<appname>/items')
+def appItems(appowner, appname):
+    app=postable(appowner, appname, "app")
+    num, vals=g.dbp.getItemsForPostableQuery(g.currentuser, g.currentuser,
+       [app.basic.fqin] )
+    appdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
+    return jsonify(appdict)
+#######################################################################################################################
+#######################################################################################################################
+#POST/GET in a lightbox?
+@adsgut.route('/library/html')
+def createlibraryhtml():
+    pass
+
+#get group info
+#x
+@adsgut.route('/library/<libraryowner>/library:<libraryname>')
+def libraryInfo(libraryowner, libraryname):
+    return postable(libraryowner, libraryname, "library").to_json()
+
+#x
+@adsgut.route('/library/<libraryowner>/library:<libraryname>/profile/html')
+def libraryProfileHtml(libraryowner, libraryname):
+    library=postable(libraryowner, libraryname, "library")
+    return render_template('libraryprofile.html', thelibrary=library)
+
+@adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
+def libraryItems(libraryowner, libraryname):
+    library=postable(libraryowner, libraryname, "library")
+    num, vals=g.dbp.getItemsForPostableQuery(g.currentuser, g.currentuser,
+       [library.basic.fqin] )
+    libdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
+    return jsonify(libdict)
 
 #######################################################################################################################
 #######################################################################################################################

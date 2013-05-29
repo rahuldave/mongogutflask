@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block body %}
+	<h2>Library {{thelibrary.basic.fqin}}</h2>
+    <h3>Library Info</h3>
+  <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}"></iframe>
+  <hr/>
+  <h3>Members</h3>
+    <h5>Members In</h5>
+  <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/members"></iframe>
+
+<h3>Items</h3>
+    <h5>Items In</h5>
+  <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/items"></iframe>
+
+{% endblock %}

@@ -3,7 +3,7 @@
 <h1>Groups</h1>
   {% for group in groups %}
     <div>
-      <h2>{{ group.basic.fqin }}</h2>
+      <h3><a href="/group/{{ group.basic.fqin }}/profile/html">{{ group.basic.fqin }}</a></h3>
       {{ group.basic.description|safe }}
     </div>
   {% else %}
@@ -13,20 +13,32 @@
 <h1>Apps</h1>
   {% for app in apps %}
     <div>
-      <h2>{{ app.basic.fqin }}</h2>
+      <h3><a href="/app/{{ app.basic.fqin }}/profile/html">{{ app.basic.fqin }}</a></h3>
       {{ app.basic.description|safe }}
     </div>
   {% else %}
     <em>Unbelievable.  No apps here so far <a href="/add">Add one</a></em>
   {% endfor %}
 <hr/>
+
 <h1>Users</h1>
   {% for user in users %}
     <div>
-      <h2>{{ user.nick }}</h2>
+      <h3><a href="/user/{{ user.nick }}/profile/html">{{ user.nick }}</a></h3>
       {{ user.adsid }}
     </div>
   {% else %}
     <em>Unbelievable.  No users here so far <a href="/add">Add one</a></em>
   {% endfor %}
+
+<h1>Libraries</h1>
+  {% for library in libraries %}
+    <div>
+      <h3><a href="/library/{{ library.basic.fqin }}/profile/html">{{ library.basic.fqin }}</a></h3>
+      {{ library.basic.description|safe }}
+    </div>
+  {% else %}
+    <em>Unbelievable.  No libraries here so far <a href="/add">Add one</a></em>
+  {% endfor %}
+<hr/>
 {% endblock %}
