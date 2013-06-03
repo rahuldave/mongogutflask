@@ -516,5 +516,231 @@ def sTagsUserAsMember(nick):
     return jsonify(stagdict)
 
 
+#################now going to tags and posts#################################
+
+#above 3 stags will be superseded, rolled in
+#BUG: no multis are done for now.
+
+
+#POST posts items into postable, get gets items for postable consistent with user.
+@adsgut.route('/postable/<pns>/<ptype>:<pname>/items', methods=['GET', 'POST'])
+def itemsForPostable(pns, ptype, pname):
+    #userthere/[fqins] 
+    #q={sort?, pagtuple?, criteria?, postable}
+    if request.method=='POST':
+        junk="NOT YET IMPLEMENTED"
+    else:
+        query=request.args
+        useras, usernick=_userget(g, query)
+
+        #need to pop the other things like pagetuples etc. Helper funcs needed
+        sort = _sortget(query)
+        pagtuple = _pagtupleget(query)
+        criteria= _criteriaget(query)
+        postable= _dictp('postable', query)
+        if not postable:
+            postable=""
+        #By this time query is popped down
+        count, items=g.dbp.getItemsForQuery(g.currentuser, useras, 
+            {'postables':[postable]}, usernick, criteria, sort, pagtuple)
+        return jsonify({'items':items, 'count':count})
+
+
+#For the RHS, given a set of items. Should this even be exposed as such?
+#we need it for post, but goes the GET make any sense?
+#CHECK: and is it secure?
+#this is post tagging into postable for POST
+@adsgut.route('/postable/<pns>/<ptype>:<pname>/taggings', methods=['GET', 'POST'])
+def taggingsForPostable(pns, ptype, pname):
+    #userthere/fqin/fqtn
+    #q={sort?, criteria?, postable}
+    if request.method=='POST':
+        junk="NOT YET IMPLEMENTED"
+    else:
+        query=request.args
+        useras, usernick=_userget(g, query)
+
+        #need to pop the other things like pagetuples etc. Helper funcs needed
+        sort = _sortget(query)
+        criteria= _criteriaget(query)
+        postable= _dictp('postable', query)
+        if not postable:
+            postable=""
+        #By this time query is popped down
+        count, taggings=g.dbp.getTaggingsForQuery(g.currentuser, useras, 
+            {'postables':[postable]}, usernick, criteria, sort)
+        return jsonify({'taggings':taggings, 'count':count})
+
+#GET all tags consistent with user for a particular postable and further query
+@adsgut.route('/postable/<pns>/<ptype>:<pname>/tags', methods=['GET'])
+def tagsForPostable(pns, ptype, pname):
+    #q={sort?, criteria?, postable}
+    query=request.args
+    useras, usernick=_userget(g, query)
+
+    #need to pop the other things like pagetuples etc. Helper funcs needed
+    sort = _sortget(query)
+    criteria= _criteriaget(query)
+    postable= _dictp('postable', query)
+    if not postable:
+        postable=""
+    #By this time query is popped down
+    count, tags=g.dbp.getTagsForQuery(g.currentuser, useras, 
+        {'postables':[postable]}, usernick, criteria, sort)
+    return jsonify({'tags':tags, 'count':count})
+
+
+
+
+def _dictp(k,d):
+    val=d.get(k, None)
+    if val:
+        d.pop(k)
+    return val
+
+def _userget(g, qdict):
+    nick=_dictp('useras', qdict)
+    userthere=_dictp('userthere', qdict)
+    if nick:
+        useras=g.db.getUserForNick(g.currentuser, nick)
+    else:
+        useras=g.currentuser
+    if userthere:
+        usernick=useras.nick
+    else:
+        usernick=False
+    return useras, usernick
+
+def _sortget(qdict):
+    #a serialixed dict of ascending and field
+    sortstring=_dictp('sort', qdict)
+    if not sortstring:
+        return None
+    sort=simplejson.loads(sortstring)
+    return sort
+
+def _criteriaget(qdict):
+    #a serialixed dict of arbitrary keys, with mongo style encoding
+    #later we will clamp down on it. BUG
+    critstring=_dictp('criteria', qdict)
+    if not critstring:
+        return False
+    crit=simplejson.loads(critstring)
+    return crit
+
+def _pagtupleget(qdict):
+    #a serialized tuple of offset, pagesize
+    pagtuplestring=_dictp('pagtuple', qdict)
+    if not pagtuplestring:
+        return None
+    pagtuple=simplejson.loads(pagtuplestring)
+    return pagtuple
+
+def _itemsget(qdict):
+    #a serialixed dict of ascending and field
+    itemstring=_dictp('items', qdict)
+    if not itemstring:
+        return []
+    #Possible security hole bug
+    items=simplejson.loads(itemstring)
+    return items
+
+#post saveItems(s), get could get various things such as stags, postings, and taggings
+#get could take a bunch of items as arguments, or a query
+@adsgut.route('/items', methods=['POST', 'GET'])
+def items():
+    ##useras?/name/itemtype
+    #q={useras?, userthere?, sort?, pagetuple?, criteria?, stags|tagnames ?, postables?}
+    if request.method=='POST':
+        useras, usernick=_userget(g, request.form)
+        itspec={}
+        itspec['creator']=useras.basic.fqin
+        itspec['name'] = request.form.get('name', None)
+        if not itspec['name']:
+            doabort("BAD_REQ", "No name specified for item")
+        itspec['itemtype'] = request.form.get('itemtype', None)
+        if not itspec['itemtype']:
+            doabort("BAD_REQ", "No itemtype specified for item")
+        newitem=g.dbp.saveItem(g.currentuser, useras, itspec)
+        return jsonify({'status':'OK', 'info':newitem})
+    else:
+        query=request.args
+        useras, usernick=_userget(g, query)
+
+        #need to pop the other things like pagetuples etc. Helper funcs needed
+        sort = _sortget(query)
+        pagtuple = _pagtupleget(query)
+        criteria= _criteriaget(query)
+        #By this time query is popped down
+        count, items=g.dbp.getItemsForQuery(g.currentuser, useras, 
+            query, usernick, criteria, sort, pagtuple)
+        return jsonify({'items':items, 'count':count})
+
+#Get tags for a query. We can use post to just create a new tag.
+#This is as opposed to tagging an item and would be used in biblio apps and such.
+@adsgut.route('/tags', methods=['POST', 'GET'])
+def tags():
+    ##useras?/name/itemtype
+    #q={useras?, userthere?, sort?, pagetuple?, criteria?, stags|tagnames ?, postables?}
+    if request.method=='POST':
+        junk="Not Yet Implemented"
+    else:
+        query=request.args
+        useras, usernick=_userget(g, query)
+
+        #need to pop the other things like pagetuples etc. Helper funcs needed
+        sort = _sortget(query)
+        criteria= _criteriaget(query)
+        #By this time query is popped down
+        count, tags=g.dbp.getTagsForQuery(g.currentuser, useras, 
+            query, usernick, criteria, sort)
+        return jsonify({'tags':tags, 'count':count})
+
+#GET tags for an item or POST: tagItem
+@adsgut.route('/tags/<ns>/<itemname>', methods=['GET', 'POST'])
+def tagsForItem(ns, itemname):
+    #taginfos=[{tagname/tagtype/description}] 
+    #q=fieldlist=[('tagname',''), ('tagtype',''), ('context', None), ('fqin', None)]
+    pass
+####These are the fromSpec family of functions for GET
+
+#multi item multi tag tagging on POST and get taggings
+@adsgut.route('/items/taggings', methods=['POST', 'GET'])
+def itemsTaggings():
+    ##name/itemtype/uri/ 
+    #q={useras?, sort?, items}
+    if request.method=='POST':
+        junk="NOT YET IMPLEMENTED"
+    else:
+        query=request.args
+        useras, usernick=_userget(g, query)
+
+        #need to pop the other things like pagetuples etc. Helper funcs needed
+        sort = _sortget(query)
+        items = _itemsget(query)
+        #By this time query is popped down
+        taggingsdict=g.dbp.getTaggingsConsistentWithUserAndItems(g.currentuser, useras, 
+            items, sort)
+        return jsonify(taggingsdict)
+
+#multi item multi postable posting on POST and get posts
+@adsgut.route('/items/postings', methods=['POST', 'GET'])
+def itemsPostings():
+    ##name/itemtype/uri/ 
+    #q={useras?, sort?, items}
+    if request.method=='POST':
+        junk="NOT YET IMPLEMENTED"
+    else:
+        query=request.args
+        useras, usernick=_userget(g, query)
+
+        #need to pop the other things like pagetuples etc. Helper funcs needed
+        sort = _sortget(query)
+        items = _itemsget(query)
+        #By this time query is popped down
+        postingsdict==g.dbp.getPostingsConsistentWithUserAndItems(g.currentuser, useras, 
+            items, sort)
+        return jsonify(postingsdict)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=4000)
