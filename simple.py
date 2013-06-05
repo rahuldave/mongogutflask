@@ -207,7 +207,7 @@ def createGroup():
         if not groupname:
             doabort("BAD_REQ", "No Group Specified")
         description=request.form.get('description', '')
-        groupspec['creator']=user
+        groupspec['creator']=user.basic.fqin
         groupspec['name']=groupname
         groupspec['description']=description
         newgroup=g.db.addGroup(g.currentuser, user, groupspec)
@@ -460,45 +460,37 @@ def _getContext(q):
     context['value']=q['cvalue']
     return context
 
-########################
-#in libs and tags, membership through a group or app confers usability
-#is this modelled, or do we need it below?
 
-#these are the ones user owns as well as can write to by dint of giving it to a group.
-@adsgut.route('/user/<nick>/libsusercanwriteto')
-def libsUserCanWriteTo(nick):
-    context=_getContext(request.args)
-    useras=g.db.getUserInfo(g.currentuser, nick)
-    libs=g.dbp.getTagsAsMemberAndOwner(g.currentuser, useras, ("eq","ads/library"), context)
-    libdict={'libraries':libs}
-    return jsonify(libdict)
 
 #these might be supersed by tagging based results to populate the left side
 
 #The users simple tags, not singletonmode (ie no notes), not libraries
-@adsgut.route('/user/<nick>/stagsuserowns')
-def sTagsUserOwns(nick):
-    context=_getContext(request.args)
-    useras=g.db.getUserInfo(g.currentuser, nick)
+@adsgut.route('/user/<nick>/tagsuserowns')
+def tagsUserOwns(nick):
+    query=request.args
+    useras, usernick=_userget(g, query)
+    tagtype= _dictp('tagtype', query)
     #will not get notes
-    stags=g.dbp.getTagsAsOwnerOnly(g.currentuser, useras, None)
+    stags=g.dbp.getTagsAsOwnerOnly(g.currentuser, useras, tagtype)
     stagdict={'simpletags':stags}
     return jsonify(stagdict)
 
 #these are the simple tags user owns as well as can write to by dint of giving it to a group.
-@adsgut.route('/user/<nick>/stagsusercanwriteto')
-def sTagsUserCanWriteTo(nick):
-    context=_getContext(request.args)
-    useras=g.db.getUserInfo(g.currentuser, nick)
-    stags=g.dbp.getTagsAsMemberAndOwner(g.currentuser, useras, ("ne","ads/library"), context)
+@adsgut.route('/user/<nick>/tagsusercanwriteto')
+def tagsUserCanWriteTo(nick):
+    query=request.args
+    useras, usernick=_userget(g, query)
+    tagtype= _dictp('tagtype', query)
+    stags=g.dbp.getAllTagsForUser(g.currentuser, useras, tagtype)
     stagdict={'simpletags':stags}
     return jsonify(stagdict)
 
-@adsgut.route('/user/<nick>/stagsasmember')
-def sTagsUserAsMember(nick):
-    context=_getContext(request.args)
-    useras=g.db.getUserInfo(g.currentuser, nick)
-    stags=g.dbp.getTagsAsMemberOnly(g.currentuser, useras, ("ne","ads/library"), context)
+@adsgut.route('/user/<nick>/tagsasmember')
+def tagsUserAsMember(nick):
+    query=request.args
+    useras, usernick=_userget(g, query)
+    tagtype= _dictp('tagtype', query)
+    stags=g.dbp.getTagsAsMemberOnly(g.currentuser, useras, tagtype)
     stagdict={'simpletags':stags}
     return jsonify(stagdict)
 
@@ -604,6 +596,7 @@ def tagsForPostable(pns, ptype, pname):
 
 
 #BUG; these currently dont have doAborts
+#do we need a dictpop? CHECK
 def _dictp(k,d):
     val=d.get(k, None)
     if val:
@@ -780,17 +773,19 @@ def tagsForItem(ns, itemname):
         taggings={'status':'OK', 'info':{'item': i.basic.fqin, 'tagging':[td for td in newtaggings]}}
         return jsonify(taggings)
     else:
-        #I am not convinced this is how to do this query
         query=request.args
         useras, usernick=_userget(g, query)
 
         #need to pop the other things like pagetuples etc. Helper funcs needed
         sort = _sortget(query)
-        criteria= _criteriaget(query)
-        criteria.append(['field':'thething__thingtopostfqin', 'op':'eq', 'value':ifqin])
+        
         #By this time query is popped down
-        count, tags=g.dbp.getTagsForQuery(g.currentuser, useras, 
-            query, usernick, criteria, sort)
+        #I am not convinced this is how to do this query
+        # criteria= _criteriaget(query)
+        # criteria.append(['field':'thething__thingtopostfqin', 'op':'eq', 'value':ifqin])
+        # count, tags=g.dbp.getTagsForQuery(g.currentuser, useras, 
+        #     query, usernick, criteria, sort)
+        count, tags= g.dbp.getTagsConsistentWithUserAndItems(g.currentuser, useras, [ifqin], sort)
         return jsonify({'tags':tags, 'count':count})
 ####These are the fromSpec family of functions for GET
 
@@ -851,7 +846,10 @@ def itemtypes():
     else:
         query=request.args
         useras, usernick=_userget(g, query)
-        return "Not Yet Implemented"
+        criteria= _criteriaget(query)
+        isitemtype=True
+        count, thetypes=g.dbp.getTypesForQuery(currentuser, useras, criteria, usernick, isitemtype)
+        return jsonify({'types':thetypes, 'count':count})
 
 #BUG: how to handle bools
 @adsgut.route('/tagtypes', methods=['POST', 'GET'])
@@ -883,7 +881,10 @@ def tagtypes():
     else:
         query=request.args
         useras, usernick=_userget(g, query)
-        return "Not Yet Implemented"
+        criteria= _criteriaget(query)
+        isitemtype=False
+        count, thetypes=g.dbp.getTypesForQuery(currentuser, useras, criteria, usernick, isitemtype)
+        return jsonify({'types':thetypes, 'count':count})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=4000)
