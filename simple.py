@@ -44,6 +44,80 @@ adsgut=app
 from flask import request, session, g, redirect, url_for, \
      abort, render_template, flash, escape, make_response, jsonify, Blueprint
 
+#BUG; these currently dont have doAborts
+#do we need a dictpop? CHECK
+def _dictp(k,d):
+    val=d.get(k, None)
+    if val:
+        d.pop(k)
+    return val
+
+def _userget(g, qdict):
+    nick=_dictp('useras', qdict)
+    userthere=_dictp('userthere', qdict)
+    if nick:
+        useras=g.db.getUserForNick(g.currentuser, nick)
+    else:
+        useras=g.currentuser
+    if userthere:
+        usernick=useras.nick
+    else:
+        usernick=False
+    return useras, usernick
+
+def _sortget(qdict):
+    #a serialixed dict of ascending and field
+    sortstring=_dictp('sort', qdict)
+    if not sortstring:
+        return None
+    sort=simplejson.loads(sortstring)
+    return sort
+
+def _criteriaget(qdict):
+    #a serialixed dict of arbitrary keys, with mongo style encoding
+    #later we will clamp down on it. BUG
+    critstring=_dictp('criteria', qdict)
+    if not critstring:
+        return False
+    crit=simplejson.loads(critstring)
+    return crit
+
+def _pagtupleget(qdict):
+    #a serialized tuple of offset, pagesize
+    pagtuplestring=_dictp('pagtuple', qdict)
+    if not pagtuplestring:
+        return None
+    pagtuple=simplejson.loads(pagtuplestring)
+    return pagtuple
+
+def _itemsget(qdict):
+    #a serialixed dict of ascending and field
+    itemstring=_dictp('items', qdict)
+    if not itemstring:
+        return []
+    #Possible security hole bug
+    items=simplejson.loads(itemstring)
+    return items
+
+def _itemstagsget(qdict):
+    #a serialixed dict of ascending and field
+    itemtagstring=_dictp('itemsandtags', qdict)
+
+    if not itemtagstring:
+        return []
+    #Possible security hole bug
+    itemsandtags=simplejson.loads(itemtagstring)
+    return itemsandtags
+
+def _tagspecsget(qdict):
+    #a serialixed dict of ascending and field
+    tagspecstring=_dictp('tagspecs', qdict)
+    if not tagspecstring:
+        return []
+    #Possible security hole bug
+    tagspecs=simplejson.loads(tagspecstring)
+    return tagspecs
+
 #x
 @adsgut.before_request
 def before_request():
@@ -198,23 +272,42 @@ def userItems(nick):
 #accepting invites.
 #DELETION methods not there BUG
 
+def createPostable(g, request, ptypestr):
+    user=g.currentuser
+    spec={}
+    name=request.form.get('name', None)
+    if not name:
+        doabort("BAD_REQ", "No Name Specified")
+    description=request.form.get('description', '')
+    spec['creator']=user.basic.fqin
+    spec['name']=name
+    spec['description']=description
+    postable=g.db.addPostable(user, user, ptypestr, spec)
+    return postable
+
 @adsgut.route('/group', methods=['POST'])#groupname/description
 def createGroup():
-    user=g.currentuser
-    groupspec={}
     if request.method == 'POST':
-        groupname=request.form.get('name', None)
-        if not groupname:
-            doabort("BAD_REQ", "No Group Specified")
-        description=request.form.get('description', '')
-        groupspec['creator']=user.basic.fqin
-        groupspec['name']=groupname
-        groupspec['description']=description
-        newgroup=g.db.addGroup(g.currentuser, user, groupspec)
+        newgroup=createPostable(g, request, "group")
         return newgroup.to_json()
     else:
         doabort("BAD_REQ", "GET not supported")
 
+@adsgut.route('/app', methods=['POST'])#name/description
+def createApp():
+    if request.method == 'POST':
+        newapp=createPostable(g, request, "app")
+        return newapp.to_json()
+    else:
+        doabort("BAD_REQ", "GET not supported")
+
+@adsgut.route('/library', methods=['POST'])#name/description
+def createLibrary():
+    if request.method == 'POST':
+        newlibrary=createPostable(g, request, "library")
+        return newlibrary.to_json()
+    else:
+        doabort("BAD_REQ", "GET not supported")
 
 @adsgut.route('/group/<groupowner>/group:<groupname>/doinvitation', methods=['POST'])#user/op
 def doInviteToGroup(groupowner, groupname):
@@ -243,97 +336,42 @@ def doInviteToGroup(groupowner, groupname):
     else:
         doabort("BAD_REQ", "GET not supported")
 
-#This is used for addition of a user. Whats the usecase? current perms protect this
-#TODO: maybe add a bulk version? That would seem to need to be added as a pythonic API: also split there into two things in pythonic API?
 #BUG: user leakage as we do user info for all users in group. another users groups should not be obtainable
-#BUG: should this handle a general memberable?
+#BUG: should this handle a general memberable? must use a SHOWNFIELDS
+
+def addMemberToPostable(g, request, fqpn):
+    nick=request.form.get('userthere', None)
+    if not nick:
+        doabort("BAD_REQ", "No User Specified")
+    user, postable=g.db.addUserToPostable(g.currentuser, fqpn, nick)
+    return user, postable
+
+def getMembersOfPostable(g, request, fqpn):
+    useras=g.currentuser
+    users=g.db.membersOfPostableFromFqin(g.currentuser,useras,fqpn)
+    userdict={'users':users}
+    return userdict
+
 @adsgut.route('/group/<groupowner>/group:<groupname>/members', methods=['GET', 'POST'])#user
 def addMembertoGroup_or_groupMembers(groupowner, groupname):
     #add permit to match user with groupowner
     fqgn=groupowner+"/group:"+groupname
     if request.method == 'POST':
-        nick=request.form.get('userthere', None)
-        if not nick:
-            doabort("BAD_REQ", "No User Specified")
-        #user=g.db.getUserForNick(g.currentuser, nick)
-        g.db.addUserToPostable(g.currentuser, fqgn, nick)
-        g.db.commit()
-        return jsonify({'status':'OK', 'info': {'user':nick, 'group':fqgn}})
+        user, group=addMemberToPostable(g, request, fqgn)
+        return jsonify({'status':'OK', 'info': {'user':user.nick, 'type':'group', 'postable':group.basic.fqin}})
     else:
-        useras=g.currentuser
-        users=g.db.membersOfPostableFromFqin(g.currentuser,useras,fqgn)
-        userdict={'users':users}
+        userdict=getMembersOfPostable(g, request, fqgn)
         return jsonify(userdict)
 
-# @adsgut.route('/group/<username>/group:<groupname>/users')
-# def group_users(username, groupname):
-#     fqgn = username+'/group:'+groupname
-#     users=g.db.usersInGroup(g.currentuser,fqgn)
-#     return jsonify({'users':users})
-
-@adsgut.route('/app', methods=['POST'])#name/description
-def createApp():
-    user=g.currentuser
-    appspec={}
-    if request.method == 'POST':
-        appname=request.form.get('name')
-        if not appname:
-            doabort("BAD_REQ", "No App Specified")
-        description=request.form.get('description', '')
-        appspec['creator']=user
-        appspec['name']=appname
-        appspec['description']=description
-        newapp=g.db.addApp(g.currentuser, user, appspec)
-        return newapp.to_json()
-    else:
-        doabort("BAD_REQ", "GET not supported")
-
-@adsgut.route('/app/<appowner>/app:<appname>/doinvitation', methods=['POST'])#user/op
-def doInviteToApp(appowner, appname):
-    #add permit to match user with appowner. BUG: what is already invited person invited (or declined person invited
-    #need to add code to deal with this and understand the app invite model)
-    fqan=appowner+"/app:"+appname
-    if request.method == 'POST':
-        #specify your own nick for accept or decline
-        nick=request.form.get('userthere', None)
-        if not nick:
-            doabort("BAD_REQ", "No User Specified")
-        op=request.form.get('op', None)
-        if not op:
-            doabort("BAD_REQ", "No Op Specified")
-        if op=="invite":
-            usertobeadded=g.db.getUserForNick(g.currentuser, nick)
-            g.db.inviteUserToApp(g.currentuser, fqan, usertobeadded)
-            return jsonify({'status':'OK', 'info': {'invited':nick, 'to':fqan}})
-        elif op=='accept':
-            g.db.acceptInviteToApp(g.currentuser, fqan, userinvited)
-            return jsonify({'status':'OK', 'info': {'invited':nick, 'to': fqan, 'accepted':True}})
-        elif op=='decline':
-            #BUG add something to invitations to mark declines.
-            return jsonify({'status': 'OK', 'info': {'invited':nick, 'to': fqan, 'accepted':False}})
-        else:
-            doabort("BAD_REQ", "No Op Specified")
-    else:
-        doabort("BAD_REQ", "GET not supported")
-
-#Whats the use case for this? bulk app adds which dont go through invites.
-#BUG: user leakage, also, should the pythonic api part be split up into two separates?
 @adsgut.route('/app/<appowner>/app:<appname>/members', methods=['GET', 'POST'])#user
 def addMemberToApp_or_appMembers(appowner, appname):
     #add permit to match user with groupowner
     fqan=appowner+"/app:"+appname
     if request.method == 'POST':
-        nick=request.form.get('userthere', None)
-        if not nick:
-            doabort("BAD_REQ", "No User Specified")
-        #user=g.db.getUserForNick(g.currentuser, nick)
-        g.db.addUserToPostable(g.currentuser, fqan, nick)
-        g.db.commit()
-        return jsonify({'status':'OK', 'info': {'user':nick, 'app':fqan}})
+        user, app=addMemberToPostable(g, request, fqan)
+        return jsonify({'status':'OK', 'info': {'user':user.nick, 'type':'app', 'postable':app.basic.fqin}})
     else:
-        useras=g.currentuser
-        users=g.db.membersOfPostableFromFqin(g.currentuser,useras,fqan)
-        userdict={'users':users}
+        userdict=getMembersOfPostable(g, request, fqan)
         return jsonify(userdict)
 
 
@@ -342,17 +380,10 @@ def addMemberToLibrary_or_libraryMembers(libraryowner, libraryname):
     #add permit to match user with groupowner
     fqln=libraryowner+"/library:"+libraryname
     if request.method == 'POST':
-        nick=request.form.get('userthere', None)
-        if not nick:
-            doabort("BAD_REQ", "No User Specified")
-        #user=g.db.getUserForNick(g.currentuser, nick)
-        g.db.addUserToPostable(g.currentuser, fqln, nick)
-        g.db.commit()
-        return jsonify({'status':'OK', 'info': {'user':nick, 'library':fqln}})
+        user, library=addMemberToPostable(g, request, fqln)
+        return jsonify({'status':'OK', 'info': {'user':user.nick, 'type':'library', 'postable':library.basic.fqin}})
     else:
-        useras=g.currentuser
-        users=g.db.membersOfPostableFromFqin(g.currentuser,useras,fqln)
-        userdict={'users':users}
+        userdict=getMembersOfPostable(g, request, fqln)
         return jsonify(userdict)
 
 #######################################################################################################################
@@ -380,13 +411,13 @@ def groupProfileHtml(groupowner, groupname):
     group=postable(groupowner, groupname, "group")
     return render_template('groupprofile.html', thegroup=group)
 
-@adsgut.route('/group/<groupowner>/group:<groupname>/items')
-def groupItems(groupowner, groupname):
-    group=postable(groupowner, groupname, "group")
-    num, vals=g.dbp.getItemsForQuery(g.currentuser, g.currentuser,
-       {'postables':[group.basic.fqin]} )
-    groupdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
-    return jsonify(groupdict)
+# @adsgut.route('/group/<groupowner>/group:<groupname>/items')
+# def groupItems(groupowner, groupname):
+#     group=postable(groupowner, groupname, "group")
+#     num, vals=g.dbp.getItemsForQuery(g.currentuser, g.currentuser,
+#        {'postables':[group.basic.fqin]} )
+#     groupdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
+#     return jsonify(groupdict)
 #######################################################################################################################
 #######################################################################################################################
 
@@ -406,13 +437,13 @@ def appProfileHtml(appowner, appname):
     app=postable(appowner, appname, "app")
     return render_template('appprofile.html', theapp=app)
 
-@adsgut.route('/app/<appowner>/app:<appname>/items')
-def appItems(appowner, appname):
-    app=postable(appowner, appname, "app")
-    num, vals=g.dbp.getItemsForQuery(g.currentuser, g.currentuser,
-       {'postables':[app.basic.fqin]} )
-    appdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
-    return jsonify(appdict)
+# @adsgut.route('/app/<appowner>/app:<appname>/items')
+# def appItems(appowner, appname):
+#     app=postable(appowner, appname, "app")
+#     num, vals=g.dbp.getItemsForQuery(g.currentuser, g.currentuser,
+#        {'postables':[app.basic.fqin]} )
+#     appdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
+#     return jsonify(appdict)
 #######################################################################################################################
 #######################################################################################################################
 #POST/GET in a lightbox?
@@ -432,13 +463,13 @@ def libraryProfileHtml(libraryowner, libraryname):
     library=postable(libraryowner, libraryname, "library")
     return render_template('libraryprofile.html', thelibrary=library)
 
-@adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
-def libraryItems(libraryowner, libraryname):
-    library=postable(libraryowner, libraryname, "library")
-    num, vals=g.dbp.getItemsForQuery(g.currentuser, g.currentuser,
-       {'postables':[library.basic.fqin]} )
-    libdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
-    return jsonify(libdict)
+# @adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
+# def libraryItems(libraryowner, libraryname):
+#     library=postable(libraryowner, libraryname, "library")
+#     num, vals=g.dbp.getItemsForQuery(g.currentuser, g.currentuser,
+#        {'postables':[library.basic.fqin]} )
+#     libdict={'count':num, 'items':[simplejson.loads(v.to_json()) for v in vals]}
+#     return jsonify(libdict)
 
 #######################################################################################################################
 #######################################################################################################################
@@ -506,12 +537,12 @@ def tagsUserAsMember(nick):
 #POST posts items into postable, get gets items for postable consistent with user.
 @adsgut.route('/postable/<pns>/<ptype>:<pname>/items', methods=['GET', 'POST'])
 def itemsForPostable(pns, ptype, pname):
-    #userthere/[fqins] 
+    #userthere/[fqins]
     #q={sort?, pagtuple?, criteria?, postable}
     if request.method=='POST':
         useras, usernick=_userget(g, request.form)
         items = _itemsget(query)
-       
+
         fqpn=pns+"/"+ptype+":"+upname
         pds=[]
         for fqin in items:
@@ -527,14 +558,23 @@ def itemsForPostable(pns, ptype, pname):
         sort = _sortget(query)
         pagtuple = _pagtupleget(query)
         criteria= _criteriaget(query)
-        postable= _dictp('postable', query)
-        if not postable:
-            postable=""
+        postable= pns+"/"+ptype+":"+pname
         #By this time query is popped down
-        count, items=g.dbp.getItemsForQuery(g.currentuser, useras, 
+        count, items=g.dbp.getItemsForQuery(g.currentuser, useras,
             {'postables':[postable]}, usernick, criteria, sort, pagtuple)
         return jsonify({'items':items, 'count':count, 'postable':postable})
 
+@adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
+def libraryItems(libraryowner, libraryname):
+    return itemsForPostable(libraryowner, "library", libraryname)
+
+@adsgut.route('/app/<appowner>/app:<appname>/items')
+def appItems(appowner, appname):
+    return itemsForPostable(appowner, "app", appname)
+
+@adsgut.route('/group/<groupowner>/group:<groupname>/items')
+def groupItems(groupowner, groupname):
+    return itemsForPostable(groupowner, "group", groupname)
 
 #For the RHS, given a set of items. Should this even be exposed as such?
 #we need it for post, but goes the GET make any sense?
@@ -548,7 +588,7 @@ def taggingsForPostable(pns, ptype, pname):
     if request.method=='POST':
         useras, usernick=_userget(g, request.form)
         itemsandtags = _itemsget(query)
-       
+
         fqpn=pns+"/"+ptype+":"+upname
         tds=[]
         for d in itemsandtags:
@@ -566,11 +606,9 @@ def taggingsForPostable(pns, ptype, pname):
         #need to pop the other things like pagetuples etc. Helper funcs needed
         sort = _sortget(query)
         criteria= _criteriaget(query)
-        postable= _dictp('postable', query)
-        if not postable:
-            postable=""
+        postable= pns+"/"+ptype+":"+pname
         #By this time query is popped down
-        count, taggings=g.dbp.getTaggingsForQuery(g.currentuser, useras, 
+        count, taggings=g.dbp.getTaggingsForQuery(g.currentuser, useras,
             {'postables':[postable]}, usernick, criteria, sort)
         return jsonify({'taggings':taggings, 'count':count, 'postable':postable})
 
@@ -585,89 +623,14 @@ def tagsForPostable(pns, ptype, pname):
     #need to pop the other things like pagetuples etc. Helper funcs needed
     sort = _sortget(query)
     criteria= _criteriaget(query)
-    postable= _dictp('postable', query)
-    if not postable:
-        postable=""
+    postable= pns+"/"+ptype+":"+pname
     #By this time query is popped down
-    count, tags=g.dbp.getTagsForQuery(g.currentuser, useras, 
+    count, tags=g.dbp.getTagsForQuery(g.currentuser, useras,
         {'postables':[postable]}, usernick, criteria, sort)
     return jsonify({'tags':tags, 'count':count})
 
 
 
-#BUG; these currently dont have doAborts
-#do we need a dictpop? CHECK
-def _dictp(k,d):
-    val=d.get(k, None)
-    if val:
-        d.pop(k)
-    return val
-
-def _userget(g, qdict):
-    nick=_dictp('useras', qdict)
-    userthere=_dictp('userthere', qdict)
-    if nick:
-        useras=g.db.getUserForNick(g.currentuser, nick)
-    else:
-        useras=g.currentuser
-    if userthere:
-        usernick=useras.nick
-    else:
-        usernick=False
-    return useras, usernick
-
-def _sortget(qdict):
-    #a serialixed dict of ascending and field
-    sortstring=_dictp('sort', qdict)
-    if not sortstring:
-        return None
-    sort=simplejson.loads(sortstring)
-    return sort
-
-def _criteriaget(qdict):
-    #a serialixed dict of arbitrary keys, with mongo style encoding
-    #later we will clamp down on it. BUG
-    critstring=_dictp('criteria', qdict)
-    if not critstring:
-        return False
-    crit=simplejson.loads(critstring)
-    return crit
-
-def _pagtupleget(qdict):
-    #a serialized tuple of offset, pagesize
-    pagtuplestring=_dictp('pagtuple', qdict)
-    if not pagtuplestring:
-        return None
-    pagtuple=simplejson.loads(pagtuplestring)
-    return pagtuple
-
-def _itemsget(qdict):
-    #a serialixed dict of ascending and field
-    itemstring=_dictp('items', qdict)
-    if not itemstring:
-        return []
-    #Possible security hole bug
-    items=simplejson.loads(itemstring)
-    return items
-
-def _itemstagsget(qdict):
-    #a serialixed dict of ascending and field
-    itemtagstring=_dictp('itemsandtags', qdict)
-
-    if not itemtagstring:
-        return []
-    #Possible security hole bug
-    itemsandtags=simplejson.loads(itemtagstring)
-    return itemsandtags
-
-def _tagspecsget(qdict):
-    #a serialixed dict of ascending and field
-    tagspecstring=_dictp('tagspecs', qdict)
-    if not tagspecstring:
-        return []
-    #Possible security hole bug
-    tagspecs=simplejson.loads(tagspecstring)
-    return tagspecs
 
 #post saveItems(s), get could get various things such as stags, postings, and taggings
 #get could take a bunch of items as arguments, or a query
@@ -696,7 +659,7 @@ def items():
         pagtuple = _pagtupleget(query)
         criteria= _criteriaget(query)
         #By this time query is popped down
-        count, items=g.dbp.getItemsForQuery(g.currentuser, useras, 
+        count, items=g.dbp.getItemsForQuery(g.currentuser, useras,
             query, usernick, criteria, sort, pagtuple)
         return jsonify({'items':items, 'count':count})
 
@@ -738,7 +701,7 @@ def tags():
         sort = _sortget(query)
         criteria= _criteriaget(query)
         #By this time query is popped down
-        count, tags=g.dbp.getTagsForQuery(g.currentuser, useras, 
+        count, tags=g.dbp.getTagsForQuery(g.currentuser, useras,
             query, usernick, criteria, sort)
         return jsonify({'tags':tags, 'count':count})
 
@@ -746,7 +709,7 @@ def tags():
 #Currently GET coming from taggingdocs: BUG: not sure of this
 @adsgut.route('/tags/<ns>/<itemname>', methods=['GET', 'POST'])
 def tagsForItem(ns, itemname):
-    #taginfos=[{tagname/tagtype/description}] 
+    #taginfos=[{tagname/tagtype/description}]
     #q=fieldlist=[('tagname',''), ('tagtype',''), ('context', None), ('fqin', None)]
     ifqin=ns+"/"+itemname
     if request.method == 'POST':
@@ -778,12 +741,12 @@ def tagsForItem(ns, itemname):
 
         #need to pop the other things like pagetuples etc. Helper funcs needed
         sort = _sortget(query)
-        
+
         #By this time query is popped down
         #I am not convinced this is how to do this query
         # criteria= _criteriaget(query)
         # criteria.append(['field':'thething__thingtopostfqin', 'op':'eq', 'value':ifqin])
-        # count, tags=g.dbp.getTagsForQuery(g.currentuser, useras, 
+        # count, tags=g.dbp.getTagsForQuery(g.currentuser, useras,
         #     query, usernick, criteria, sort)
         count, tags= g.dbp.getTagsConsistentWithUserAndItems(g.currentuser, useras, [ifqin], sort)
         return jsonify({'tags':tags, 'count':count})
@@ -792,7 +755,7 @@ def tagsForItem(ns, itemname):
 #multi item multi tag tagging on POST and get taggings
 @adsgut.route('/items/taggings', methods=['POST', 'GET'])
 def itemsTaggings():
-    ##name/itemtype/uri/ 
+    ##name/itemtype/uri/
     #q={useras?, sort?, items}
     if request.method=='POST':
         junk="NOT YET IMPLEMENTED"
@@ -804,14 +767,14 @@ def itemsTaggings():
         sort = _sortget(query)
         items = _itemsget(query)
         #By this time query is popped down
-        taggingsdict=g.dbp.getTaggingsConsistentWithUserAndItems(g.currentuser, useras, 
+        taggingsdict=g.dbp.getTaggingsConsistentWithUserAndItems(g.currentuser, useras,
             items, sort)
         return jsonify(taggingsdict)
 
 #multi item multi postable posting on POST and get posts
 @adsgut.route('/items/postings', methods=['POST', 'GET'])
 def itemsPostings():
-    ##name/itemtype/uri/ 
+    ##name/itemtype/uri/
     #q={useras?, sort?, items}
     if request.method=='POST':
         junk="NOT YET IMPLEMENTED"
@@ -823,7 +786,7 @@ def itemsPostings():
         sort = _sortget(query)
         items = _itemsget(query)
         #By this time query is popped down
-        postingsdict==g.dbp.getPostingsConsistentWithUserAndItems(g.currentuser, useras, 
+        postingsdict==g.dbp.getPostingsConsistentWithUserAndItems(g.currentuser, useras,
             items, sort)
         return jsonify(postingsdict)
 
