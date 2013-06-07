@@ -81,17 +81,35 @@ def jsonify(*args, **kwargs):
     return Response(simplejson.dumps(dict(*args, **kwargs), cls=MongoEngineJsonEncoder), mimetype='application/json')
 #BUG; these currently dont have doAborts
 #do we need a dictpop? CHECK
-def _dictp(k,d):
-    print k,d
-    val=d.get(k, None)
-    print "VAL", val
-    if val:
+
+#FOR GET
+def _dictg(k,d, listmode=False):
+    val=d.get(k, [None])
+    if d.has_key(k):
+        d.pop(k)
+    if listmode:
+        return val
+    else:
+        return val[0]
+
+#FOR POST
+def _dictp(k,d, default=None):
+    val=d.get(k, default)
+    if d.has_key(k):
         d.pop(k)
     return val
 
+def _userpostget(g, postdict):
+    nick=_dictp('useras', postdict)
+    if nick:
+        useras=g.db.getUserForNick(g.currentuser, nick)
+    else:
+        useras=g.currentuser
+    return useras
+
 def _userget(g, qdict):
-    nick=_dictp('useras', qdict)
-    userthere=_dictp('userthere', qdict)
+    nick=_dictg('useras', qdict)
+    userthere=_dictg('userthere', qdict)
     if nick:
         useras=g.db.getUserForNick(g.currentuser, nick)
     else:
@@ -104,56 +122,68 @@ def _userget(g, qdict):
 
 def _sortget(qdict):
     #a serialixed dict of ascending and field
-    sortstring=_dictp('sort', qdict)
+    sortstring=_dictg('sort', qdict)
     if not sortstring:
         return None
-    sort=simplejson.loads(sortstring)
+    sort={}
+    sort['field'], sort['ascending'] = sortstring.split(':')
     return sort
 
+#criteria is a multiple ampersand list, with colon separators.
+#eg criteria=basic__fqin:eq:something&criteria=
+#we create from it a criteria list of dicts
 def _criteriaget(qdict):
     #a serialixed dict of arbitrary keys, with mongo style encoding
     #later we will clamp down on it. BUG
-    critstring=_dictp('criteria', qdict)
-    if not critstring:
+    critlist=_dictg('criteria', qdict, True)
+    if not critlist[0]:
         return False
-    crit=simplejson.loads(critstring)
+    crit=[]
+    for ele in critlist:
+        cr={}
+        cr['field'], cr['op'], cr['value'] = ele.split(':',2)
+        cr.append(cr)
     return crit
 
 def _pagtupleget(qdict):
     #a serialized tuple of offset, pagesize
-    pagtuplestring=_dictp('pagtuple', qdict)
+    pagtuplestring=_dictg('pagtuple', qdict)
     if not pagtuplestring:
         return None
-    pagtuple=simplejson.loads(pagtuplestring)
+    plist=pagtuplestring.split(':')
+    pagtuple=[int(e) if e else -1 for e in pagtuplestring.split(':')]
     return pagtuple
 
+#currently force a new items each time.
 def _itemsget(qdict):
-    #a serialixed dict of ascending and field
-    itemstring=_dictp('items', qdict)
-    print "itemstring", itemstring
-    if not itemstring:
+    itemlist=_dictg('items', qdict, True)
+    print "itemlist", itemlist
+    if not itemlist[0]:
         return []
     #Possible security hole bug
-    items=simplejson.loads(itemstring)
-    return items
+    return itemlist
 
+def _itemspostget(qdict):
+    itemlist=_dictp('items', qdict)
+    if not itemlist:
+        return []
+    #Possible security hole bug
+    return itemlist
+
+#used in POST, not in GET
 def _itemstagsget(qdict):
-    #a serialixed dict of ascending and field
-    itemtagstring=_dictp('itemsandtags', qdict)
-
-    if not itemtagstring:
+    itemstagslist=_dictp('itemsandtags', qdict)
+    if not itemstagslist:
         return []
     #Possible security hole bug
-    itemsandtags=simplejson.loads(itemtagstring)
-    return itemsandtags
+    return itemstagslist
 
+#used in POST, not in get
 def _tagspecsget(qdict):
-    #a serialixed dict of ascending and field
-    tagspecstring=_dictp('tagspecs', qdict)
-    if not tagspecstring:
+    tagspecs=_dictp('tagspecs', qdict)
+    if not tagspecs:
         return []
     #Possible security hole bug
-    tagspecs=simplejson.loads(tagspecstring)
     return tagspecs
 
 #x
@@ -289,6 +319,7 @@ def librariesUserIsInvitedTo(nick):
     libs=g.db.postableInvitesForUser(g.currentuser, useras, "library")
     return jsonify(libraries=libs)
 
+#BUG currentuser useras here?
 @adsgut.route('/user/<nick>/items')
 def userItems(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
@@ -301,17 +332,19 @@ def userItems(nick):
 #accepting invites.
 #DELETION methods not there BUG
 
+#BUG: check currentuser useras stuff here
 def createPostable(g, request, ptypestr):
-    user=g.currentuser
     spec={}
-    name=request.form.get('name', None)
+    jsonpost=dict(request.json)
+    useras=_userpostget(g,jsonpost)
+    name=_dictp('name', jsonpost)
     if not name:
         doabort("BAD_REQ", "No Name Specified")
-    description=request.form.get('description', '')
-    spec['creator']=user.basic.fqin
+    description=_dictp('description', jsonpost, '')
+    spec['creator']=useras.basic.fqin
     spec['name']=name
     spec['description']=description
-    postable=g.db.addPostable(user, user, ptypestr, spec)
+    postable=g.db.addPostable(g.currentuser, useras, ptypestr, spec)
     return postable
 
 @adsgut.route('/group', methods=['POST'])#groupname/description
@@ -344,19 +377,21 @@ def doInviteToGroup(groupowner, groupname):
     fqgn=groupowner+"/group:"+groupname
     if request.method == 'POST':
         #specify your own nick for accept or decline
-        nick=request.form.get('userthere', None)
+        jsonpost=dict(request.json)
+        nick=_dictp('userthere', jsonpost)
+        #for inviting this is nick of user invited. 
+        #for accepting this is your own nick
         if not nick:
             doabort("BAD_REQ", "No User Specified")
-        op=request.form.get('op', None)
+        op=_dictp('op', jsonpost)
         if not op:
             doabort("BAD_REQ", "No Op Specified")
         if op=="invite":
-            usertobeadded=g.db.getUserForNick(g.currentuser, nick)
-            g.db.inviteUserToGroup(g.currentuser, fqgn, usertobeadded)
-            return jsonify({'status':'OK', 'info': {'invited':nick, 'to':fqgn}})
+            utba, p=g.db.inviteUserToPostableUsingNick(g.currentuser, fqgn, nick)
+            return jsonify({'status':'OK', 'info': {'invited':utba.nick, 'to':fqgn}})
         elif op=='accept':
-            g.db.acceptInviteToGroup(g.currentuser, fqgn, userinvited)
-            return jsonify({'status':'OK', 'info': {'invited':nick, 'to': fqgn, 'accepted':True}})
+            me, p=g.db.acceptInviteToPostable(g.currentuser, fqgn, nick)
+            return jsonify({'status':'OK', 'info': {'invited':me.nick, 'to': fqgn, 'accepted':True}})
         elif op=='decline':
             #BUG add something to invitations to mark declines.
             return jsonify({'status': 'OK', 'info': {'invited':nick, 'to': fqgn, 'accepted':False}})
@@ -368,8 +403,10 @@ def doInviteToGroup(groupowner, groupname):
 #BUG: user leakage as we do user info for all users in group. another users groups should not be obtainable
 #BUG: should this handle a general memberable? must use a SHOWNFIELDS
 
+#BUG: do we want a useras here?
 def addMemberToPostable(g, request, fqpn):
-    nick=request.form.get('userthere', None)
+    jsonpost=dict(request.json)
+    nick=_dictp('userthere', jsonpost)
     if not nick:
         doabort("BAD_REQ", "No User Specified")
     user, postable=g.db.addUserToPostable(g.currentuser, fqpn, nick)
@@ -541,7 +578,7 @@ def _getContext(q):
 def tagsUserOwns(nick):
     query=dict(request.args)
     useras, usernick=_userget(g, query)
-    tagtype= _dictp('tagtype', query)
+    tagtype= _dictg('tagtype', query)
     #will not get notes
     stags=g.dbp.getTagsAsOwnerOnly(g.currentuser, useras, tagtype)
     stagdict={'simpletags':stags}
@@ -552,7 +589,7 @@ def tagsUserOwns(nick):
 def tagsUserCanWriteTo(nick):
     query=dict(request.args)
     useras, usernick=_userget(g, query)
-    tagtype= _dictp('tagtype', query)
+    tagtype= _dictg('tagtype', query)
     stags=g.dbp.getAllTagsForUser(g.currentuser, useras, tagtype)
     stagdict={'simpletags':stags}
     return jsonify(stagdict)
@@ -561,7 +598,7 @@ def tagsUserCanWriteTo(nick):
 def tagsUserAsMember(nick):
     query=dict(request.args)
     useras, usernick=_userget(g, query)
-    tagtype= _dictp('tagtype', query)
+    tagtype= _dictg('tagtype', query)
     stags=g.dbp.getTagsAsMemberOnly(g.currentuser, useras, tagtype)
     stagdict={'simpletags':stags}
     return jsonify(stagdict)
@@ -581,8 +618,9 @@ def itemsForPostable(pns, ptype, pname):
     #userthere/[fqins]
     #q={sort?, pagtuple?, criteria?, postable}
     if request.method=='POST':
-        useras, usernick=_userget(g, request.form)
-        items = _itemsget(query)
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
+        items = _itemspostget(jsonpost)
 
         fqpn=pns+"/"+ptype+":"+upname
         pds=[]
@@ -627,8 +665,9 @@ def taggingsForPostable(pns, ptype, pname):
     #userthere/fqin/fqtn
     #q={sort?, criteria?, postable}
     if request.method=='POST':
-        useras, usernick=_userget(g, request.form)
-        itemsandtags = _itemsget(query)
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
+        itemsandtags = _itemstagsget(jsonpost)
 
         fqpn=pns+"/"+ptype+":"+upname
         tds=[]
@@ -680,13 +719,14 @@ def items():
     ##useras?/name/itemtype
     #q={useras?, userthere?, sort?, pagetuple?, criteria?, stags|tagnames ?, postables?}
     if request.method=='POST':
-        useras, usernick=_userget(g, request.form)
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
         itspec={}
         itspec['creator']=useras.basic.fqin
-        itspec['name'] = request.form.get('name', None)
+        itspec['name'] = _dictp('name', jsonpost)
         if not itspec['name']:
             doabort("BAD_REQ", "No name specified for item")
-        itspec['itemtype'] = request.form.get('itemtype', None)
+        itspec['itemtype'] = _dictp('itemtype', jsonpost)
         if not itspec['itemtype']:
             doabort("BAD_REQ", "No itemtype specified for item")
         newitem=g.dbp.saveItem(g.currentuser, useras, itspec)
@@ -715,8 +755,9 @@ def tags():
     ##useras?/name/itemtype
     #q={useras?, userthere?, sort?, pagetuple?, criteria?, stags|tagnames ?, postables?}
     if request.method=='POST':
-        useras, usernick=_userget(g, request.form)
-        tagspecs=_tagspecsget(request.form)
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
+        tagspecs=_tagspecsget(jsonpost)
         newtags=[]
         for ti in tagspecs:
             if not ti.has_key('name'):
@@ -754,9 +795,10 @@ def tagsForItem(ns, itemname):
     #q=fieldlist=[('tagname',''), ('tagtype',''), ('context', None), ('fqin', None)]
     ifqin=ns+"/"+itemname
     if request.method == 'POST':
-        useras, usernick=_userget(g, request.form)
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
         item=g.dbp._getItem(g.currentuser, ifqin)
-        tagspecs=_tagspecsget(request.form)
+        tagspecs=_tagspecsget(jsonpost)
         newtaggings=[]
         for ti in tagspecs:
             if not (ti.has_key('name') or ti.has_key('content')):
@@ -828,7 +870,7 @@ def itemsPostings():
         sort = _sortget(query)
         items = _itemsget(query)
         #By this time query is popped down
-        postingsdict==g.dbp.getPostingsConsistentWithUserAndItems(g.currentuser, useras,
+        postingsdict=g.dbp.getPostingsConsistentWithUserAndItems(g.currentuser, useras,
             items, sort)
         return jsonify(postingsdict)
 
@@ -837,13 +879,14 @@ def itemtypes():
     ##useras?/name/itemtype
     #q={useras?, userthere?, sort?, pagetuple?, criteria?, stags|tagnames ?, postables?}
     if request.method=='POST':
-        useras, usernick=_userget(g, request.form)
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
         itspec={}
         itspec['creator']=useras.basic.fqin
-        itspec['name'] = request.form.get('name', None)
+        itspec['name'] = _dictp('name', jsonpost)
         if not itspec['name']:
             doabort("BAD_REQ", "No name specified for itemtype")
-        itspec['postable'] = request.form.get('postable', None)
+        itspec['postable'] = _dictp('postable', jsonpost)
         if not itspec['postable']:
             doabort("BAD_REQ", "No postable specified for itemtype")
         newitemtype=g.dbp.addItemType(g.currentuser, useras, itspec)
@@ -862,12 +905,13 @@ def tagtypes():
     ##useras?/name/itemtype
     #q={useras?, userthere?, sort?, pagetuple?, criteria?, stags|tagnames ?, postables?}
     if request.method=='POST':
-        useras, usernick=_userget(g, request.form)
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
         itspec={}
         itspec['creator']=useras.basic.fqin
-        itspec['name'] = request.form.get('name', None)
-        itspec['tagmode'] = request.form.get('tagmode', None)
-        itspec['singletonmode'] = request.form.get('singletonmode', None)
+        itspec['name'] = _dictp('name', jsonpost)
+        itspec['tagmode'] = _dictp('tagmode', jsonpost)
+        itspec['singletonmode'] = _dictp('singletonmode',jsonpost)
         if not itspec['tagmode']:
             del itspec['tagmode']
         else:
@@ -878,7 +922,7 @@ def tagtypes():
             itspec['singletonmode']=bool(itspec['singletonmode'])
         if not itspec['name']:
             doabort("BAD_REQ", "No name specified for itemtype")
-        itspec['postable'] = request.form.get('postable', None)
+        itspec['postable'] = _dictp('postable', jsonpost)
         if not itspec['postable']:
             doabort("BAD_REQ", "No postable specified for itemtype")
         newtagtype=g.dbp.addTagType(g.currentuser, useras, itspec)
