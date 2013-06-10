@@ -142,8 +142,22 @@ def _criteriaget(qdict):
     for ele in critlist:
         cr={}
         cr['field'], cr['op'], cr['value'] = ele.split(':',2)
-        cr.append(cr)
+        crit.append(cr)
     return crit
+
+def _queryget(qdict):
+    #a serialixed dict of arbitrary keys, with mongo style encoding
+    #later we will clamp down on it. BUG
+    querylist=_dictg('query', qdict, True)
+    if not querylist[0]:
+        return {}
+    q={}
+    for ele in querylist:
+        field, value = ele.split(':',1)
+        if not q.has_key(field):
+            q[field]=[]
+        q[field].append(value)
+    return q
 
 def _pagtupleget(qdict):
     #a serialized tuple of offset, pagesize
@@ -489,6 +503,12 @@ def groupProfileHtml(groupowner, groupname):
     group=postable(groupowner, groupname, "group")
     return render_template('groupprofile.html', thegroup=group)
 
+@adsgut.route('/group/<groupowner>/group:<groupname>/filter/html')
+def groupFilterHtml(groupowner, groupname):
+    querystring=request.query_string
+    group=postable(groupowner, groupname, "group")
+    return render_template('groupfilter.html', thegroup=group, querystring=querystring)
+
 # @adsgut.route('/group/<groupowner>/group:<groupname>/items')
 # def groupItems(groupowner, groupname):
 #     group=postable(groupowner, groupname, "group")
@@ -638,9 +658,15 @@ def itemsForPostable(pns, ptype, pname):
         pagtuple = _pagtupleget(query)
         criteria= _criteriaget(query)
         postable= pns+"/"+ptype+":"+pname
+        q=_queryget(query)
+        print "Q is", q
+        if not q.has_key('postables'):
+            q['postables']=[]
+        q['postables'].append(postable)
+        
         #By this time query is popped down
         count, items=g.dbp.getItemsForQuery(g.currentuser, useras,
-            {'postables':[postable]}, usernick, criteria, sort, pagtuple)
+            q, usernick, criteria, sort, pagtuple)
         return jsonify({'items':items, 'count':count, 'postable':postable})
 
 @adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
@@ -687,9 +713,13 @@ def taggingsForPostable(pns, ptype, pname):
         sort = _sortget(query)
         criteria= _criteriaget(query)
         postable= pns+"/"+ptype+":"+pname
+        q=_queryget(query)
+        if not q.has_key('postables'):
+            q['postables']=[]
+        q['postables'].append(postable)
         #By this time query is popped down
         count, taggings=g.dbp.getTaggingsForQuery(g.currentuser, useras,
-            {'postables':[postable]}, usernick, criteria, sort)
+            q, usernick, criteria, sort)
         return jsonify({'taggings':taggings, 'count':count, 'postable':postable})
 
 #GET all tags consistent with user for a particular postable and further query
@@ -704,9 +734,13 @@ def tagsForPostable(pns, ptype, pname):
     sort = _sortget(query)
     criteria= _criteriaget(query)
     postable= pns+"/"+ptype+":"+pname
+    q=_queryget(query)
+    if not q.has_key('postables'):
+        q['postables']=[]
+    q['postables'].append(postable)
     #By this time query is popped down
     count, tags=g.dbp.getTagsForQuery(g.currentuser, useras,
-        {'postables':[postable]}, usernick, criteria, sort)
+        q, usernick, criteria, sort)
     return jsonify({'tags':tags, 'count':count})
 
 

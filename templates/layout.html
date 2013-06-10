@@ -2,13 +2,74 @@
 <html>
 <head>
 <title>Flask MongoEngine</title>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}">
 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class=page>
-  <div>
-  {% block body %}{% endblock %}
-  </div>
+<div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">ADS GUT</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              <a href="#" class="navbar-link">Login</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="/">Home</a></li>
+              <li><a href="#about">Profile</a></li>
+              <li><a href="#contact">Groups</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
 </div>
+<div class="container-fluid">
+    <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+                {% block sidebar %}{% endblock %}
+              <!--li class="nav-header">Sidebar</li>
+              <li class="active"><a href="#">Link</a></li>
+              <li><a href="#">Link</a></li>
+              <li><a href="#">Link</a></li>
+              <li><a href="#">Link</a></li>
+
+              <li class="nav-header">Sidebar</li>
+              <li><a href="#">Link</a></li>
+              <li><a href="#">Link</a></li>
+              <li><a href="#">Link</a></li-->
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+
+          <div class="row-fluid">
+            <div class=page>
+                {% block body %}{% endblock %}
+            </div>
+          </div><!--/row-->
+        </div><!--/span-->
+    </div><!--/row-fluid-->
+
+</div><!--/.fluid-container-->
+<!-- Le javascript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='coffee-script.js') }}"></script>
+{% block scripturls %}{% endblock %}
+<script>
+{% block script %}{% endblock %}
+</script>
+<script type="text/coffeescript">
+{% block coffeescript %}{% endblock %}
+</script>
 </body>
 </html>
