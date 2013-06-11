@@ -731,7 +731,7 @@ def tagsForPostable(pns, ptype, pname):
     useras, usernick=_userget(g, query)
 
     #need to pop the other things like pagetuples etc. Helper funcs needed
-    sort = _sortget(query)
+    #sort = _sortget(query)
     criteria= _criteriaget(query)
     postable= pns+"/"+ptype+":"+pname
     q=_queryget(query)
@@ -740,7 +740,7 @@ def tagsForPostable(pns, ptype, pname):
     q['postables'].append(postable)
     #By this time query is popped down
     count, tags=g.dbp.getTagsForQuery(g.currentuser, useras,
-        q, usernick, criteria, sort)
+        q, usernick, criteria)
     return jsonify({'tags':tags, 'count':count})
 
 
@@ -814,11 +814,10 @@ def tags():
         useras, usernick=_userget(g, query)
 
         #need to pop the other things like pagetuples etc. Helper funcs needed
-        sort = _sortget(query)
         criteria= _criteriaget(query)
         #By this time query is popped down
         count, tags=g.dbp.getTagsForQuery(g.currentuser, useras,
-            query, usernick, criteria, sort)
+            query, usernick, criteria)
         return jsonify({'tags':tags, 'count':count})
 
 #GET tags for an item or POST: tagItem
