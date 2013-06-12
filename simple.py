@@ -652,7 +652,7 @@ def itemsForPostable(pns, ptype, pname):
     else:
         query=dict(request.args)
         useras, usernick=_userget(g, query)
-
+        print "QQQ",query, request.args
         #need to pop the other things like pagetuples etc. Helper funcs needed
         sort = _sortget(query)
         pagtuple = _pagtupleget(query)
@@ -906,6 +906,27 @@ def itemsPostings():
         postingsdict=g.dbp.getPostingsConsistentWithUserAndItems(g.currentuser, useras,
             items, sort)
         return jsonify(postingsdict)
+
+@adsgut.route('/items/taggingsandpostings', methods=['POST', 'GET'])
+def itemsTaggingsAndPostings():
+    ##name/itemtype/uri/
+    #q={useras?, sort?, items}
+    if request.method=='POST':
+        junk="NOT YET IMPLEMENTED"
+    else:
+        query=dict(request.args)
+        useras, usernick=_userget(g, query)
+        print 'AAAQUERY', query, request.args
+        #need to pop the other things like pagetuples etc. Helper funcs needed
+        sort = _sortget(query)
+        items = _itemsget(query)
+        #By this time query is popped down
+        postingsdict=g.dbp.getPostingsConsistentWithUserAndItems(g.currentuser, useras,
+            items, sort)
+        taggingsdict=g.dbp.getTaggingsConsistentWithUserAndItems(g.currentuser, useras,
+            items, sort)
+        print taggingsdict, postingsdict
+        return jsonify(postings=postingsdict, taggings=taggingsdict)
 
 @adsgut.route('/itemtypes', methods=['POST', 'GET'])
 def itemtypes():
