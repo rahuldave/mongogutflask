@@ -567,6 +567,12 @@ def libraryFilterHtml(libraryowner, libraryname):
     library=postable(libraryowner, libraryname, "library")
     return render_template('libraryfilter.html', thelibrary=library, querystring=querystring)
 
+
+@adsgut.route('/postable/<po>/<pt>:<pn>/filter/html')
+def postableFilterHtml(po, pt, pn):
+    querystring=request.query_string
+    p=postable(po, pn, pt)
+    return render_template('postablefilter.html', p=p, querystring=querystring)
 # @adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
 # def libraryItems(libraryowner, libraryname):
 #     library=postable(libraryowner, libraryname, "library")
