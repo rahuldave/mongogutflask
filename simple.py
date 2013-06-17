@@ -417,13 +417,17 @@ def doInviteToGroup(groupowner, groupname):
 #BUG: user leakage as we do user info for all users in group. another users groups should not be obtainable
 #BUG: should this handle a general memberable? must use a SHOWNFIELDS
 
-#BUG: do we want a useras here?
+#BUG: do we want a useras here? Also BUG:no existing version for tag, or POST to changer generable ownerable info yet
 def addMemberToPostable(g, request, fqpn):
     jsonpost=dict(request.json)
-    nick=_dictp('userthere', jsonpost)
+    #BUG:need fqun right now. work with nicks later
+    fqmn=_dictp('member', jsonpost)
+    changerw=_dictp('changerw', jsonpost)
+    if not changerw:
+        changerw=False
     if not nick:
         doabort("BAD_REQ", "No User Specified")
-    user, postable=g.db.addUserToPostable(g.currentuser, fqpn, nick)
+    user, postable=g.db.addMemberableToPostable(g.currentuser, g.currentuser, fqpn, fqmn, changerw)
     return user, postable
 
 def getMembersOfPostable(g, request, fqpn):
@@ -449,8 +453,8 @@ def addMembertoGroup_or_groupMembers(groupowner, groupname):
     #add permit to match user with groupowner
     fqgn=groupowner+"/group:"+groupname
     if request.method == 'POST':
-        user, group=addMemberToPostable(g, request, fqgn)
-        return jsonify({'status':'OK', 'info': {'user':user.nick, 'type':'group', 'postable':group.basic.fqin}})
+        member, group=addMemberToPostable(g, request, fqgn)
+        return jsonify({'status':'OK', 'info': {'member':member.basic.fqin, 'type':'group', 'postable':group.basic.fqin}})
     else:
         userdict=getMembersOfPostable(g, request, fqgn)
         return jsonify(userdict)
@@ -460,8 +464,8 @@ def addMemberToApp_or_appMembers(appowner, appname):
     #add permit to match user with groupowner
     fqan=appowner+"/app:"+appname
     if request.method == 'POST':
-        user, app=addMemberToPostable(g, request, fqan)
-        return jsonify({'status':'OK', 'info': {'user':user.nick, 'type':'app', 'postable':app.basic.fqin}})
+        member, app=addMemberToPostable(g, request, fqan)
+        return jsonify({'status':'OK', 'info': {'member':member.basic.fqin, 'type':'app', 'postable':app.basic.fqin}})
     else:
         userdict=getMembersOfPostable(g, request, fqan)
         return jsonify(userdict)
@@ -472,8 +476,8 @@ def addMemberToLibrary_or_libraryMembers(libraryowner, libraryname):
     #add permit to match user with groupowner
     fqln=libraryowner+"/library:"+libraryname
     if request.method == 'POST':
-        user, library=addMemberToPostable(g, request, fqln)
-        return jsonify({'status':'OK', 'info': {'user':user.nick, 'type':'library', 'postable':library.basic.fqin}})
+        member, library=addMemberToPostable(g, request, fqln)
+        return jsonify({'status':'OK', 'info': {'member':member.basic.fqin, 'type':'library', 'postable':library.basic.fqin}})
     else:
         userdict=getMembersOfPostable(g, request, fqln)
         return jsonify(userdict)
