@@ -17,7 +17,7 @@ def todfl(cil):
     return cidictl
 
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../')))
-print "ATH", sys.path
+#print "ATH", sys.path
 from random import choice
 
 from flask.ext.mongoengine import MongoEngine
@@ -576,7 +576,12 @@ def libraryFilterHtml(libraryowner, libraryname):
 def postableFilterHtml(po, pt, pn):
     querystring=request.query_string
     p=postable(po, pn, pt)
-    return render_template('postablefilter.html', p=p, querystring=querystring)
+    if pn=='default' and pt=='group':
+        tqtype='stags'
+    else:
+        tqtype='tagname'
+    #tqtype='stags'
+    return render_template('postablefilter.html', p=p, querystring=querystring, tqtype=tqtype)
 # @adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
 # def libraryItems(libraryowner, libraryname):
 #     library=postable(libraryowner, libraryname, "library")

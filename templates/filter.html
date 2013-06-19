@@ -20,22 +20,16 @@ Breadcrumb {{ querystring }}
 $=jQuery
 console.log "In Filtera"
 
-format_tags = (tagtype, $sel, tags, tagqkey)->
-  htmlstring="<li class=\"nav-header\">#{tagtype}</li>"
-  for [k,v] in tags
-    if tagqkey is 'stags'
-      t=v[0]
-    else if tagqkey is 'tagname'
-      t=k
-    else
-      t="CRAP"
+format_tags = ($sel, tags)->
+  htmlstring="<li class=\"nav-header\">TAGS</li>"
+  for t in tags
     nonqloc=document.location.href.split('?')[0]
-    url=nonqloc+"?query=tagtype:#{tagtype}&query=#{tagqkey}:#{t}"
-    urla=document.location+"&query=tagtype:#{tagtype}&query=#{tagqkey}:#{t}"
+    url=nonqloc+"?query=stags:#{t}"
+    urla=document.location+"&query=stags:#{t}"
     if nonqloc is document.location.href
-      urla=document.location+"?query=#{tagqkey}:#{t}"
+      urla=document.location+"?query=stags:#{t}"
     
-    htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{k}</a>&nbsp;<a href=\"#{urla}\">(+)</a>#{v}</span></li>"
+    htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{t}</a>&nbsp;<a href=\"#{urla}\">(+)</a></span></li>"
   $sel.html(htmlstring)
 
 
@@ -44,6 +38,7 @@ format_items = ($sel, items, count, stags, notes, postings)->
   htmlstring=""
   for i in items
     fqin=i.basic.fqin
+    console.log
     url=adslocation+"#{i.basic.name}"
     htmlstring = htmlstring+"<li><a href=\"#{url}\">#{i.basic.name}</a><br/>"
     t2list=("<a href=\"#{t}\">#{t}</a>" for t in stags[fqin])
@@ -56,42 +51,32 @@ format_items = ($sel, items, count, stags, notes, postings)->
   $sel.html(htmlstring)
   $('#breadcrumb').append("#{count} items")
 
-get_tags = (tags, tqtype) ->
+get_tags = (data, ix) ->
+  tags = data.tags
   console.log "TAGS", tags
-  tdict={}
-  if tqtype is 'stags'
-    return ([t[3], [t[0]]] for t in tags)
-  for t in tags
-    [fqtn, user, type, name]=t
-    if tdict[name] is undefined
-      tdict[name]=[]
-    tdict[name].push(fqtn)
-  if tqtype is 'tagname'
-    return ([k,v] for own k,v of tdict)
-  return []
+  return (t[ix] for t in tags)
 
 get_taggings = (data) ->
   stags={}
   notes={}
   for own k,v of data.taggings
-    #console.log "1>>>", k,v[0], v[1]
+    console.log "1>>>", k,v[0], v[1]
     if v[0] > 0
       stags[k]=(e.thething.postfqin for e in v[1] when e.thething.tagtype is "ads/tagtype:tag")
       notes[k]=(e.thething.tagdescription for e in v[1] when e.thething.tagtype is "ads/tagtype:note")
     else
       stags[k]=[]
       notes[k]=[]
-    #console.log "HHHHH", stags[k], notes[k]
+    console.log "HHHHH", stags[k], notes[k]
   return [stags, notes]
 
 $ ->
   vars="{{ querystring | safe }}"
   $.get "/postable/{{ p.basic.fqin}}/tags?#{vars}", (data) ->
-    #console.log "Tag Count", data.count, vars
-    for own k,v of data.tags
-      format_tags(k, $('#stags'), get_tags(v, '{{ tqtype }}'), '{{ tqtype }}')
+    console.log "Tag Count", data.count, vars
+    format_tags($('#stags'), get_tags(data,0))
   $.get "/postable/{{ p.basic.fqin}}/items?#{vars}", (data) ->
-    #console.log "Item Count", data.count, vars
+    console.log "Item Count", data.count, vars
     theitems=data.items
     thecount=data.count
     itemlist=("items=#{encodeURIComponent(i.basic.fqin)}" for i in theitems)
@@ -101,7 +86,7 @@ $ ->
       [stags, notes]=get_taggings(data)
       postings={}
       for own k,v of data.postings
-        #console.log "2>>>", k,v[0],v[1]
+        console.log "2>>>", k,v[0],v[1]
         if v[0] > 0
           postings[k]=(e.thething.postfqin for e in v[1])
         else
