@@ -7,6 +7,9 @@
 
 {% block body %}
 <h2>{{ p.classname }} <a href="/postable/{{p.basic.fqin}}/filter/html">{{p.basic.fqin}}</a></h2>
+<p>
+  <a href="" id="useradder" data="off">Add user filter</a>
+</p>
 <p id="breadcrumb">
 Breadcrumb {{ querystring }}
 </p>
@@ -30,12 +33,18 @@ format_tags = (tagtype, $sel, tags, tagqkey)->
     else
       t="CRAP"
     nonqloc=document.location.href.split('?')[0]
-    url=nonqloc+"?query=tagtype:#{tagtype}&query=#{tagqkey}:#{t}"
-    urla=document.location+"&query=tagtype:#{tagtype}&query=#{tagqkey}:#{t}"
-    if nonqloc is document.location.href
-      urla=document.location+"?query=#{tagqkey}:#{t}"
+    if tagqkey is 'tagname'
+      url=nonqloc+"?query=tagtype:#{tagtype}&query=#{tagqkey}:#{t}"
+      urla=document.location+"&query=tagtype:#{tagtype}&query=#{tagqkey}:#{t}"
+      if nonqloc is document.location.href
+        urla=document.location+"?query=tagtype:#{tagtype}&query=#{tagqkey}:#{t}"
+    else
+      url=nonqloc+"?query=#{tagqkey}:#{t}"
+      urla=document.location+"&query=#{tagqkey}:#{t}"
+      if nonqloc is document.location.href
+        urla=document.location+"?query=#{tagqkey}:#{t}"
     
-    htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{k}</a>&nbsp;<a href=\"#{urla}\">(+)</a>#{v}</span></li>"
+    htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{k}</a>&nbsp;<a href=\"#{urla}\">(+)</a></span></li>"
   $sel.html(htmlstring)
 
 
@@ -107,4 +116,13 @@ $ ->
         else
           postings[k]=[]
       format_items $('#items'), theitems, thecount, stags, notes, postings
+  $ua=$('#useradder')
+  nonqloc=document.location.href.split('?')[0]
+  if $ua.attr('data') is 'off'
+    if nonqloc is document.location.href
+      urla=document.location+"?userthere=true"
+    else
+      urla=document.location+"&userthere=true"
+    $ua.attr('href', urla)
+    $ua.attr('data', 'on')
 {% endblock %}

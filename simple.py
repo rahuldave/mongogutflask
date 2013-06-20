@@ -580,7 +580,7 @@ def postableFilterHtml(po, pt, pn):
         tqtype='stags'
     else:
         tqtype='tagname'
-    #tqtype='stags'
+    tqtype='tagname'
     return render_template('postablefilter.html', p=p, querystring=querystring, tqtype=tqtype)
 # @adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
 # def libraryItems(libraryowner, libraryname):
