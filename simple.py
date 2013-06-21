@@ -581,7 +581,8 @@ def postableFilterHtml(po, pt, pn):
     else:
         tqtype='tagname'
     tqtype='tagname'
-    return render_template('postablefilter.html', p=p, querystring=querystring, tqtype=tqtype)
+    #BUG using currentuser right now. need to support a notion of useras
+    return render_template('postablefilter.html', p=p, querystring=querystring, tqtype=tqtype, useras=g.currentuser)
 # @adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
 # def libraryItems(libraryowner, libraryname):
 #     library=postable(libraryowner, libraryname, "library")

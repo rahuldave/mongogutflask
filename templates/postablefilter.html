@@ -8,7 +8,7 @@
 {% block body %}
 <h2>{{ p.classname }} <a href="/postable/{{p.basic.fqin}}/filter/html">{{p.basic.fqin}}</a></h2>
 <p>
-  <a href="" id="useradder" data="off">Add user filter</a>
+  <a href="" id="useradder" data="off">Add user filter</a> for currentuser {{ useras.nick }}
 </p>
 <p id="breadcrumb">
 Breadcrumb {{ querystring }}
@@ -44,7 +44,7 @@ format_tags = (tagtype, $sel, tags, tagqkey)->
       if nonqloc is document.location.href
         urla=document.location+"?query=#{tagqkey}:#{t}"
     
-    htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{k}</a>&nbsp;<a href=\"#{urla}\">(+)</a></span></li>"
+    htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{k}</a>&nbsp;<a href=\"#{urla}\">(+)</a>#{v.join(',')}</span></li>"
   $sel.html(htmlstring)
 
 
@@ -55,12 +55,13 @@ format_items = ($sel, items, count, stags, notes, postings)->
     fqin=i.basic.fqin
     url=adslocation+"#{i.basic.name}"
     htmlstring = htmlstring+"<li><a href=\"#{url}\">#{i.basic.name}</a><br/>"
-    t2list=("<a href=\"#{t}\">#{t}</a>" for t in stags[fqin])
+    t2list=("<a href=\"/postable/{{ useras.nick }}/group:default/filter/html?query=tagname:#{t[0]}&query=tagtype:#{t[1]}\">#{t[0]}</a>" for t in stags[fqin])
     htmlstring=htmlstring+"<span>Tagged as "+t2list.join(", ")+"</span>"
     t3list=("<span>#{t}</span><br/>" for t in notes[fqin])
     htmlstring=htmlstring+"<p>Notes:<br/>"+t3list.join("<br/>")+"</p>"
-    p2list=("<a href=\"/postable/#{p}/filter/html\">#{p}</a>" for p in postings[fqin])
-    htmlstring=htmlstring+"<span>Posted as "+p2list.join(", ")+"</span><br/></li>"
+    p2list=("<a href=\"/postable/#{p}/filter/html\">#{p}</a>" for p in postings[fqin] when p isnt '{{ useras.nick }}/group:default')
+    console.log "P@list", p2list
+    htmlstring=htmlstring+"<span>Posted in "+p2list.join(", ")+"</span><br/></li>"
 
   $sel.html(htmlstring)
   $('#breadcrumb').append("#{count} items")
@@ -85,7 +86,7 @@ get_taggings = (data) ->
   for own k,v of data.taggings
     #console.log "1>>>", k,v[0], v[1]
     if v[0] > 0
-      stags[k]=(e.thething.postfqin for e in v[1] when e.thething.tagtype is "ads/tagtype:tag")
+      stags[k]=([e.thething.tagname, e.thething.tagtype] for e in v[1] when e.thething.tagtype is "ads/tagtype:tag")
       notes[k]=(e.thething.tagdescription for e in v[1] when e.thething.tagtype is "ads/tagtype:note")
     else
       stags[k]=[]
