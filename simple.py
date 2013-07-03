@@ -184,6 +184,13 @@ def _itemspostget(qdict):
     #Possible security hole bug
     return itemlist
 
+def _postablesget(qdict):
+    plist=_dictp('postables', qdict)
+    if not plist:
+        return []
+    #Possible security hole bug
+    return plist
+
 #used in POST, not in GET
 def _itemstagsget(qdict):
     itemstagslist=_dictp('itemsandtags', qdict)
@@ -844,6 +851,22 @@ def tags():
 
 #GET tags for an item or POST: tagItem
 #Currently GET coming from taggingdocs: BUG: not sure of this
+
+def _setupTagspec(ti):
+    #atleast one of name or content must be there (tag or note)
+    if not (ti.has_key('name') or ti.has_key('content')):
+        doabort('BAD_REQ', "No name or content specified for tag")
+    if not ti['tagtype']:
+        doabort('BAD_REQ', "No tagtypes specified for tag")
+    tagspec={}
+    tagspec['creator']=useras.basic.fqin
+    if ti.has_key('name'):
+        tagspec['name'] = ti['name']
+    if ti.has_key('content'):
+        tagspec['content'] = ti['content']
+    tagspec['tagtype'] = ti['tagtype']
+    return tagspec
+
 @adsgut.route('/tags/<ns>/<itemname>', methods=['GET', 'POST'])
 def tagsForItem(ns, itemname):
     #taginfos=[{tagname/tagtype/description}]
@@ -856,17 +879,7 @@ def tagsForItem(ns, itemname):
         tagspecs=_tagspecsget(jsonpost)
         newtaggings=[]
         for ti in tagspecs:
-            if not (ti.has_key('name') or ti.has_key('content')):
-                doabort('BAD_REQ', "No name or content specified for tag")
-            if not ti['tagtype']:
-                doabort('BAD_REQ', "No tagtypes specified for tag")
-            tagspec={}
-            tagspec['creator']=useras.basic.fqin
-            if ti.has_key('name'):
-                tagspec['name'] = ti['name']
-            if ti.has_key('content'):
-                tagspec['content'] = ti['content']
-            tagspec['tagtype'] = ti['tagtype']
+            tagspec=_setupTagspec(ti)
             i,t,td=g.dbp.tagItem(g.currentuser, useras, item.basic.fqin, tagspec)
             newtaggings.append[td]
 
@@ -897,7 +910,18 @@ def itemsTaggings():
     ##name/itemtype/uri/
     #q={useras?, sort?, items}
     if request.method=='POST':
-        junk="NOT YET IMPLEMENTED"
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
+        fqins = _itemspostget(jsonpost)
+        tagspecs=_tagspecsget(jsonpost)
+        newtaggings=[]
+        for fqin in fqins:
+            for ti in tagspecs:
+                tagspec=_setupTagspec(ti)
+                i,t,td=g.dbp.tagItem(g.currentuser, useras, fqin, tagspec)
+                newtaggings.append[td]
+        itemtaggings={'status':'OK', 'taggings':tds}
+        return jsonify(itemtaggings)
     else:
         query=dict(request.args)
         useras, usernick=_userget(g, query)
@@ -916,7 +940,17 @@ def itemsPostings():
     ##name/itemtype/uri/
     #q={useras?, sort?, items}
     if request.method=='POST':
-        junk="NOT YET IMPLEMENTED"
+        jsonpost=dict(request.json)
+        useras = _userpostget(g, jsonpost)
+        fqins = _itemspostget(jsonpost)
+        fqpns = _postablesget(jsonpost)
+        pds=[]
+        for fqin in fqins:
+            for fqpn in fqpns:
+                i,pd=g.dbp.postItemIntoPostable(g.currentuser, useras, fqpn, fqin)
+                pds.append(pd)
+        itempostings={'status':'OK', 'postings':pds}
+        return jsonify(itempostings)
     else:
         query=dict(request.args)
         useras, usernick=_userget(g, query)
@@ -934,7 +968,7 @@ def itemsTaggingsAndPostings():
     ##name/itemtype/uri/
     #q={useras?, sort?, items}
     if request.method=='POST':
-        junk="NOT YET IMPLEMENTED"
+        junk="NOT YET IMPLEMENTED AND I DONT THINK WE WILL"
     else:
         query=dict(request.args)
         useras, usernick=_userget(g, query)
