@@ -246,7 +246,7 @@ def logout():
 #x
 @adsgut.route('/')
 def index():
-    return "Hello World"
+    return render_template('index.html')
 #x
 @adsgut.route('/all')
 def all():
@@ -1044,6 +1044,17 @@ def tagtypes():
         isitemtype=False
         count, thetypes=g.dbp.getTypesForQuery(g.currentuser, useras, criteria, usernick, isitemtype)
         return jsonify({'types':thetypes, 'count':count})
+
+@adsgut.route('/postform/html', methods=['POST', 'GET'])
+def postForm():
+    if request.method=='POST':
+        return "Not Yet Done"
+    else:
+        query=dict(request.args)
+        itemstring=query.get('items','')
+        items=itemstring[0].split(':')
+        print query, itemstring, items, "<<<"
+        return render_template('postform1.html', items=items)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=4000)

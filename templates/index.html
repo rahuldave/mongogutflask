@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
+<a href="javascript:(function(){if(window.myBookmarklet!==undefined){myBookmarklet();}else{document.body.appendChild(document.createElement('script')).src='http://localhost:4000/static/marklet.js';}})();">Marklet</a>
 <h1>Groups</h1>
   {% for group in groups %}
     <div>
