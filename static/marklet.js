@@ -2,13 +2,13 @@
 
 	// the minimum version of jQuery we want
 	var v = "1.3.2";
-	alert("hi0");
+	//alert("hi0");
 	// check prior inclusion and version
 	if (window.jQuery === undefined || window.jQuery.fn.jquery < v) {
 		var done = false;
 		var script = document.createElement("script");
 		script.src = "http://ajax.googleapis.com/ajax/libs/jquery/" + v + "/jquery.min.js";
-		alert("hi1");
+		//alert("hi1");
 		script.onload = script.onreadystatechange = function(){
 			if (!done && (!this.readyState || this.readyState == "loaded" || this.readyState == "complete")) {
 				done = true;
@@ -17,7 +17,7 @@
 		};
 		document.getElementsByTagName("head")[0].appendChild(script);
 	} else {
-		alert("hi3");
+		//alert("hi3");
 		initMyBookmarklet();
 	}
 	
@@ -27,9 +27,9 @@
 			// your JavaScript code goes here!
 			var items=[];
 			$(".searchresult > .span1 > .checkbox > input:checked").each(
-					function(){items.push($(this).attr("value"));}); 
+					function(){items.push("ads/"+$(this).attr("value"));}); 
 			var itemstring=items.join(":");
-			alert("ITEMSTRING=", itemstring);
+			//alert("ITEMSTRING=", itemstring);
 			open("http://localhost:4000/postform/html?items="+itemstring, width="750", height="300");
 		})();
 	}

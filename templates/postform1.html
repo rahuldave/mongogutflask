@@ -1,9 +1,33 @@
 {% extends "layout.html" %}
 {% block body %}
     <h2>Posting form</h2>
+<ul id="items">
 
-{% for item in items %}
-  {{ item }}
-{% endfor %}
+</ul>
+{% endblock %}
 
+{% block coffeescript %}
+$=jQuery
+console.log "In Postform"
+
+$ -> 
+  vars="{{ querystring | safe }}"
+  console.log "VARS",vars
+  $.get "/itemsinfo?#{vars}", (data) ->
+    console.log "Item Count", data.count, data.items, vars
+    theitems=data.items
+    thecount=data.count
+    itemlist=("items=#{encodeURIComponent(i.basic.fqin)}" for i in theitems)
+    itemsq=itemlist.join("&")
+    console.log "itemsq", itemlist, itemsq
+    $.get "/items/taggingsandpostings?#{itemsq}", (data)->
+      [stags, notes]=get_taggings(data)
+      postings={}
+      for own k,v of data.postings
+        #console.log "2>>>", k,v[0],v[1]
+        if v[0] > 0
+          postings[k]=(e.thething.postfqin for e in v[1])
+        else
+          postings[k]=[]
+      format_items $('#items'), theitems, thecount, stags, notes, postings
 {% endblock %}
