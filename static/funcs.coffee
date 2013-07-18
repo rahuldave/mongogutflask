@@ -23,26 +23,53 @@ format_tags = (tagtype, $sel, tags, tagqkey)->
       if nonqloc is document.location.href
         urla=document.location+"?query=#{tagqkey}:#{t}"
     
-    htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{k}</a>&nbsp;<a href=\"#{urla}\">(+)</a>#{v.join(',')}</span></li>"
+    htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{k}</a>&nbsp;<a href=\"#{urla}\">(+)</a></span></li>"
+    ##{v.join(',')}
   $sel.html(htmlstring)
 
 
-format_items = ($sel, items, count, stags, notes, postings)->
+format_notes_for_item = (fqin, notes) ->
+  t3list=("<span>#{t}</span><br/>" for t in notes[fqin])
+  if t3list.length >0
+    return "<p>Notes:<br/>"+t3list.join("<br/>")+"</p>"
+  else
+    return ""
+
+format_tags_for_item = (fqin, stags, nick) ->
+  t2list=("<a href=\"/postable/#{nick}/group:default/filter/html?query=tagname:#{t[0]}&query=tagtype:#{t[1]}\">#{t[0]}</a>" for t in stags[fqin])
+  if t2list.length >0
+    return "<span>Tagged as "+t2list.join(", ")+"</span>"
+  else
+    return ""
+
+format_postings_for_item = (fqin, postings, nick) ->
+  p2list=("<a href=\"/postable/#{p}/filter/html\">#{p}</a>" for p in postings[fqin] when p isnt "#{nick}/group:default")
+  if p2list.length >0
+    return "<span>Posted in "+p2list.join(", ")+"</span>"
+  else
+    return ""
+
+format_items = ($sel, nick, items, count, stags, notes, postings, formatter, asform=false) ->
   adslocation="http://labs.adsabs.harvard.edu/adsabs/abs/"
   htmlstring=""
   for i in items
     fqin=i.basic.fqin
     url=adslocation+"#{i.basic.name}"
-    htmlstring = htmlstring+"<li><a href=\"#{url}\">#{i.basic.name}</a><br/>"
-    t2list=("<a href=\"/postable/{{ useras.nick }}/group:default/filter/html?query=tagname:#{t[0]}&query=tagtype:#{t[1]}\">#{t[0]}</a>" for t in stags[fqin])
-    htmlstring=htmlstring+"<span>Tagged as "+t2list.join(", ")+"</span>"
-    t3list=("<span>#{t}</span><br/>" for t in notes[fqin])
-    htmlstring=htmlstring+"<p>Notes:<br/>"+t3list.join("<br/>")+"</p>"
-    p2list=("<a href=\"/postable/#{p}/filter/html\">#{p}</a>" for p in postings[fqin] when p isnt '{{ useras.nick }}/group:default')
-    console.log "P@list", p2list
-    htmlstring=htmlstring+"<span>Posted in "+p2list.join(", ")+"</span><br/></li>"
+    htmlstring = htmlstring+"<#{formatter}><a href=\"#{url}\">#{i.basic.name}</a><br/>"
+    htmlstring=htmlstring+format_tags_for_item(fqin, stags, nick)  
+    htmlstring=htmlstring+format_postings_for_item(fqin, postings, nick) 
+    htmlstring=htmlstring+format_notes_for_item(fqin, notes, nick)  
+    htmlstring=htmlstring+"</#{formatter}>"
+    if asform
+      htmlstring=htmlstring+"<div class=\"control-group\">
+                              <label class=\"control-label\">Add Note</label>
+                              <input type=\"text\" class=\"controls\" placeholder=\"Type something…\">
+                              <label class=\"checkbox control-label\">
+                                <input type=\"checkbox\" class=\"controls\"> Make Private
+                              </label>
+                            </div>"
 
-  $sel.html(htmlstring)
+    $sel.prepend(htmlstring)
   $('#breadcrumb').append("#{count} items")
 
 get_tags = (tags, tqtype) ->

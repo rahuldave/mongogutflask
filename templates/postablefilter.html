@@ -46,7 +46,7 @@ $ ->
           postings[k]=(e.thething.postfqin for e in v[1])
         else
           postings[k]=[]
-      format_items $('#items'), theitems, thecount, stags, notes, postings
+      format_items $('#items'), "{{useras.nick}}", theitems, thecount, stags, notes, postings, "li"
   $ua=$('#useradder')
   nonqloc=document.location.href.split('?')[0]
   if $ua.attr('data') is 'off'

@@ -1,15 +1,40 @@
 {% extends "layout.html" %}
 {% block body %}
-    <h2>Posting form</h2>
-<ul id="items">
+    <h2>Saving {{itemtype}}s</h2>
+<form id="items">
+    <legend>Tagging and Posting</legend>
+    {% if nameable %}
+      <div class="control-group">
+        <label class="control-label">Name this {{itemtype}}</label>
+        <input class="controls" type="text" placeholder="Type something…">
+      </div>
+    {% endif %}
+    <div class="control-group">
+      <label class="checkbox control-label">
+        <input class="controls" type="checkbox"> Make Public
+      </label>
+    </div>
+    <div class="control-group">
+      <label class="control-label">Libraries</label>
+      <input class="controls" type="text" placeholder="Type something…">
+    </div>
+    <div class="control-group">
+      <label class="control-label">Groups</label>
+      <input class="controls" type="text" placeholder="Type something…">
+    </div>
+    <div class="control-group">
+      <label class="control-label">Tags</label>
+      <input class="controls" type="text" placeholder="Type something…">
+    </div>
+    <button type="submit" class="btn">Submit</button>
 
-</ul>
+</form>
 {% endblock %}
 
 {% block coffeescript %}
 $=jQuery
 console.log "In Postform"
-
+#currently below only works for pubs, but ought to work otherwise too
 $ -> 
   vars="{{ querystring | safe }}"
   console.log "VARS",vars
@@ -29,5 +54,5 @@ $ ->
           postings[k]=(e.thething.postfqin for e in v[1])
         else
           postings[k]=[]
-      format_items $('#items'), theitems, thecount, stags, notes, postings
+      format_items $('#items'), "{{useras.nick}}", theitems, thecount, stags, notes, postings, "div", true
 {% endblock %}

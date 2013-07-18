@@ -1053,17 +1053,43 @@ def itemsinfo():
     theitems=[{'basic':{'name':i.split('/')[-1], 'fqin':i}} for i in items]
     return jsonify({'items': theitems, 'count':len(theitems)})
 
-@adsgut.route('/postform/html', methods=['POST', 'GET'])
-def postForm():
+@adsgut.route('/postform/<itemtypens>/<itemtypename>/html', methods=['POST', 'GET'])
+def postForm(itemtypens, itemtypename):
+    print "NS,NAME", itemtypens, itemtypename
+    itemtype=itemtypens+"/"+itemtypename
     if request.method=='POST':
         return "Not Yet Done"
     else:
+        print "ITEMTYPE", itemtype
         query=dict(request.args)
         querystring=request.query_string
         itemstring=query.get('items',[''])[0]
         items=itemstring.split(':')
-        theitems=[{ 'basic':{'name':i.split('/')[-1],'fqin':i}} for i in items]
-        return render_template('postform1.html', items=theitems, querystring=querystring)
+        theitems=[]
+        if itemtype=="ads/pub":
+            theitems=[{ 'basic':{'name':i.split('/')[-1],'fqin':i}} for i in items]
+        if itemtype=="ads/search":
+            theitems=[{ 'basic':{'name':itemstring,'fqin':'ads/'+itemstring}}]
+        print "THEITEMS", theitems
+        #How do we BUG get itemtype. we should redofqin to ads/pub:name as the itemtype
+        #always determines the namespace of the item. This would mean name had to be
+        #globally unique rather than locally for user usage, unless we have a dual name
+        #currently get from url
+        singlemode=False
+        if len(theitems) ==1:
+            singlemode=True
+        #this ought to be got from itemtype, currently BUG hack
+        nameable=False
+        if itemtype=="ads/search":
+            nameable=True  
+        if nameable and singlemode:
+            nameable=True
+        return render_template('postform1.html', items=theitems, 
+                querystring=querystring, 
+                singlemode=singlemode,
+                nameable=nameable,
+                itemtype=itemtypename,
+                useras=g.currentuser)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=4000)
