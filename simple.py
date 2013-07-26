@@ -279,6 +279,8 @@ def userProfileHtml(nick):
 def groupsUserIsIn(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
     groups=g.db.postablesForUser(g.currentuser, useras, "group")
+    groups.remove("adsgut/group:public")
+    groups.remove(useras.nick+"/group:default")
     return jsonify(groups=groups)
 
 #x
@@ -302,6 +304,12 @@ def appsUserIsIn(nick):
     apps=g.db.postablesForUser(g.currentuser, useras, "app")
     return jsonify(apps=apps)
 
+@adsgut.route('/user/<nick>/appsusercanwriteto')
+def appsUserCanWriteTo(nick):
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    apps=g.db.postablesForUser(g.currentuser, useras, "app")
+    return jsonify(apps=apps)
+
 #x
 @adsgut.route('/user/<nick>/appsuserowns')
 def appsUserOwns(nick):
@@ -321,6 +329,12 @@ def appsUserIsInvitedTo(nick):
 
 @adsgut.route('/user/<nick>/librariesuserisin')
 def librariesUserIsIn(nick):
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    libs=g.db.postablesForUser(g.currentuser, useras, "library")
+    return jsonify(libraries=libs)
+
+@adsgut.route('/user/<nick>/librariesusercanwriteto')
+def librariesUserCanWriteTo(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
     libs=g.db.postablesForUser(g.currentuser, useras, "library")
     return jsonify(libraries=libs)
@@ -453,6 +467,12 @@ def getInvitedsForPostable(g, request, fqpn):
 def groupInviteds(groupowner, groupname):
     fqgn=groupowner+"/group:"+groupname
     userdict=getInvitedsForPostable(g, request, fqgn)
+    return jsonify(userdict)
+
+@adsgut.route('/library/<libraryowner>/library:<libraryname>/inviteds')
+def libraryInviteds(libraryowner, libraryname):
+    fqln=libraryowner+"/library:"+libraryname
+    userdict=getInvitedsForPostable(g, request, fqln)
     return jsonify(userdict)
 
 @adsgut.route('/group/<groupowner>/group:<groupname>/members', methods=['GET', 'POST'])#user

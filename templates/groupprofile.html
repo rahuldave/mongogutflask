@@ -1,18 +1,22 @@
 {% extends "layout.html" %}
 {% block body %}
-	<h2>Group {{thegroup.basic.fqin}}</h2>
-    <h3>Group Info</h3>
-  <iframe width="100%" src="/group/{{ thegroup.basic.fqin}}"></iframe width="100%">
+	<h3>Group {{thegroup.basic.fqin}}</h3>
+  <!--iframe width="100%" src="/group/{{ thegroup.basic.fqin}}"></iframe width="100%"-->
+  <div id="info" style="display:none"></div>
   <hr/>
-  <h3>Members</h3>
-    <h5>Members In</h5>
+  <h4>Members In</h4>
   <iframe width="100%" src="/group/{{ thegroup.basic.fqin}}/members"></iframe width="100%">
 
-<h3>Inviteds</h3>
-    <h5>MInviteds In</h5>
+  <h4>Inviteds</h4>
   <iframe width="100%" src="/group/{{ thegroup.basic.fqin}}/inviteds"></iframe width="100%">
-<h3>Items</h3>
-    <h5>Items In</h5>
-  <iframe width="100%" width="100%" src="/group/{{ thegroup.basic.fqin}}/items"></iframe width="100%">
 
+{% endblock %}
+{% block coffeescript %}
+$=jQuery
+$ -> 
+  console?.log "Hello World"
+  $.get "/group/{{ thegroup.basic.fqin}}", (data) ->
+    content=views.postable_info data, templates.group_info
+    $('div#info').append(content);
+    $('div#info').show();
 {% endblock %}

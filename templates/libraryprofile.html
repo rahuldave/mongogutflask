@@ -1,15 +1,21 @@
 {% extends "layout.html" %}
 {% block body %}
-	<h2>Library {{thelibrary.basic.fqin}}</h2>
-    <h3>Library Info</h3>
-  <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}"></iframe>
+<h3>Library {{thelibrary.basic.fqin}}</h3>
+  <!--iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}"></iframe-->
+  <div id="info" style="display:none"></div>
   <hr/>
-  <h3>Members</h3>
-    <h5>Members In</h5>
+  <h4>Members</h4>
   <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/members"></iframe>
+  <h4>Inviteds</h4>
+  <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/inviteds"></iframe width="100%">
 
-<h3>Items</h3>
-    <h5>Items In</h5>
-  <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/items"></iframe>
-
+{% endblock %}
+{% block coffeescript %}
+$=jQuery
+$ -> 
+  console?.log "Hello World"
+  $.get "/library/{{ thelibrary.basic.fqin}}", (data) ->
+    content=views.postable_info data, templates.library_info
+    $('div#info').append(content);
+    $('div#info').show();
 {% endblock %}

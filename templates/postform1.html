@@ -6,7 +6,7 @@
     {% if nameable %}
       <div class="control-group">
         <label class="control-label">Name this {{itemtype}}</label>
-        <input class="controls" type="text" placeholder="Type something…">
+        <input class="controls" type="text" placeholder="Name for {{itemtype}}…">
       </div>
     {% endif %}
     <div class="control-group">
@@ -15,16 +15,16 @@
       </label>
     </div>
     <div class="control-group">
-      <label class="control-label">Libraries</label>
-      <input class="controls" type="text" placeholder="Type something…">
+      <label id="libslabel" class="control-label">Libraries</label>
+      <input class="controls" type="text" placeholder="Library Name…">
     </div>
     <div class="control-group">
-      <label class="control-label">Groups</label>
-      <input class="controls" type="text" placeholder="Type something…">
+      <label id="groupslabel" class="control-label">Groups</label>
+      <input class="controls" type="text" placeholder="Group Name…">
     </div>
     <div class="control-group">
       <label class="control-label">Tags</label>
-      <input class="controls" type="text" placeholder="Type something…">
+      <input class="controls" type="text" placeholder="Tag Name…">
     </div>
     <button type="submit" class="btn">Submit</button>
 
@@ -55,4 +55,5 @@ $ ->
         else
           postings[k]=[]
       format_items $('#items'), "{{useras.nick}}", theitems, thecount, stags, notes, postings, "div", true
+      add_libs_and_groups $('#libslabel'), $('#groupslabel'), "{{useras.nick}}"
 {% endblock %}
