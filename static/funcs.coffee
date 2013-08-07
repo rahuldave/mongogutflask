@@ -2,6 +2,7 @@ root = exports ? this
 $=jQuery
 console.log "In Funcs"
 {renderable, ul, li, dl, dt, dd} = teacup
+w = widgets
 
 format_tags = (tagtype, $sel, tags, tagqkey)->
   htmlstring="<li class=\"nav-header\">#{tagtype}</li>"
@@ -107,6 +108,14 @@ add_libs_and_groups = ($libsel, $groupsel, nick) ->
   $.get "/user/#{nick}/librariesuserisin", (data) ->
     $libsel.append("<span> (in #{data.libraries.join(',')})</span>")
 
+postable_members_template = renderable (users) ->
+  userlist= (k for k,v of users)
+  w.inline_list userlist
+
+postable_members = (data, template) ->
+  template(data.users)
+
+
 postable_info_layout = renderable ({basic, owner}) ->
   dl '.dl-horizontal', ->
     dt "Description"
@@ -136,7 +145,10 @@ root.format_items = format_items
 root.format_tags = format_tags
 root.add_libs_and_groups= add_libs_and_groups
 root.views = 
-  postable_info: postable_info
+  library_info: postable_info
+  group_info: postable_info
+  postable_members: postable_members
 root.templates =
   library_info: library_info_template
   group_info: group_info_template
+  postable_members: postable_members_template

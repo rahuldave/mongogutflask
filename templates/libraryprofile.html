@@ -5,7 +5,8 @@
   <div id="info" style="display:none"></div>
   <hr/>
   <h4>Members</h4>
-  <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/members"></iframe>
+  <!--iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/members"></iframe-->
+  <div id="members" style="display:none"></div>
   <h4>Inviteds</h4>
   <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/inviteds"></iframe width="100%">
 
@@ -15,7 +16,11 @@ $=jQuery
 $ -> 
   console?.log "Hello World"
   $.get "/library/{{ thelibrary.basic.fqin}}", (data) ->
-    content=views.postable_info data, templates.library_info
-    $('div#info').append(content);
-    $('div#info').show();
+    content=views.library_info data, templates.library_info
+    $('div#info').append(content)
+    $('div#info').show()
+  $.get "/library/{{ thelibrary.basic.fqin}}/members", (data) ->
+    content=views.postable_members data, templates.postable_members
+    $('div#members').append(content)
+    $('div#members').show()
 {% endblock %}
