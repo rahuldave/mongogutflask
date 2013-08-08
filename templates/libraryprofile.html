@@ -7,20 +7,34 @@
   <h4>Members</h4>
   <!--iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/members"></iframe-->
   <div id="members" style="display:none"></div>
-  <h4>Inviteds</h4>
-  <iframe width="100%" src="/library/{{ thelibrary.basic.fqin}}/inviteds"></iframe width="100%">
-
+  {% if owner %}
+  <h4>Invitations</h4>
+  <div id="invitedform" style="display:none"></div>
+  <div id="inviteds" style="display:none"></div>
+  {% endif %}
 {% endblock %}
 {% block coffeescript %}
 $=jQuery
 $ -> 
   console?.log "Hello World"
   $.get "/library/{{ thelibrary.basic.fqin}}", (data) ->
+    console?.log data
     content=views.library_info data, templates.library_info
     $('div#info').append(content)
     $('div#info').show()
   $.get "/library/{{ thelibrary.basic.fqin}}/members", (data) ->
-    content=views.postable_members data, templates.postable_members
+    content=views.postable_members "{{owner}}", data, templates.postable_members
     $('div#members').append(content)
     $('div#members').show()
+  {% if owner %}
+  content=widgets.one_submit_with_cb("invite_user","Invite a user using their email:", "Invite", "Can Post?")
+  $('div#invitedform').append(content)
+  content=widgets.dropdown_submit_with_cb("add_group", ['a','b','c'],"Add a group you are a member of:","Add", "Can Post?")
+  $('div#invitedform').append(content)
+  $('div#invitedform').show()
+  $.get "/library/{{ thelibrary.basic.fqin}}/inviteds", (data) ->
+    content=views.postable_inviteds data, templates.postable_inviteds
+    $('div#inviteds').append(content)
+    $('div#inviteds').show()
+  {% endif %}
 {% endblock %}

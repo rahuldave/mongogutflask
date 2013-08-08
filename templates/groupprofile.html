@@ -1,22 +1,38 @@
 {% extends "layout.html" %}
 {% block body %}
-	<h3>Group {{thegroup.basic.fqin}}</h3>
-  <!--iframe width="100%" src="/group/{{ thegroup.basic.fqin}}"></iframe width="100%"-->
+<h3>Group {{thegroup.basic.fqin}}</h3>
+  <!--iframe width="100%" src="/group/{{ thegroup.basic.fqin}}"></iframe-->
   <div id="info" style="display:none"></div>
   <hr/>
-  <h4>Members In</h4>
-  <iframe width="100%" src="/group/{{ thegroup.basic.fqin}}/members"></iframe width="100%">
-
-  <h4>Inviteds</h4>
-  <iframe width="100%" src="/group/{{ thegroup.basic.fqin}}/inviteds"></iframe width="100%">
-
+  <h4>Members</h4>
+  <!--iframe width="100%" src="/group/{{ thegroup.basic.fqin}}/members"></iframe-->
+  <div id="members" style="display:none"></div>
+  {% if owner %}
+  <h4>Invitations</h4>
+  <div id="invitedform" style="display:none"></div>
+  <div id="inviteds" style="display:none"></div>
+  {% endif %}
 {% endblock %}
 {% block coffeescript %}
 $=jQuery
 $ -> 
   console?.log "Hello World"
   $.get "/group/{{ thegroup.basic.fqin}}", (data) ->
-    content=views.postable_info data, templates.group_info
-    $('div#info').append(content);
-    $('div#info').show();
+    console?.log data
+    content=views.group_info data, templates.group_info
+    $('div#info').append(content)
+    $('div#info').show()
+  $.get "/group/{{ thegroup.basic.fqin}}/members", (data) ->
+    content=views.postable_members "{{owner}}", data, templates.postable_members
+    $('div#members').append(content)
+    $('div#members').show()
+  {% if owner %}
+  content=widgets.one_submit("invite_user","Invite a user using their email:", "Invite")
+  $('div#invitedform').append(content)
+  $('div#invitedform').show()
+  $.get "/group/{{ thegroup.basic.fqin}}/inviteds", (data) ->
+    content=views.postable_inviteds data, templates.postable_inviteds
+    $('div#inviteds').append(content)
+    $('div#inviteds').show()
+  {% endif %}
 {% endblock %}

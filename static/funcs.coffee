@@ -108,13 +108,21 @@ add_libs_and_groups = ($libsel, $groupsel, nick) ->
   $.get "/user/#{nick}/librariesuserisin", (data) ->
     $libsel.append("<span> (in #{data.libraries.join(',')})</span>")
 
-postable_members_template = renderable (users) ->
-  userlist= (k for k,v of users)
-  w.inline_list userlist
+postable_members_template = renderable (users, owner) ->
+  if owner is 'True'
+    w.table_from_dict("User", "Can User Write", users)
+  else
+    userlist= (k for k,v of users)
+    w.inline_list userlist
 
-postable_members = (data, template) ->
+postable_inviteds_template = renderable (users) ->
+  w.table_from_dict("User", "Can User Write", users)
+
+postable_members = (owner, data, template) ->
+  template(data.users, owner)
+
+postable_inviteds = (data, template) ->
   template(data.users)
-
 
 postable_info_layout = renderable ({basic, owner}) ->
   dl '.dl-horizontal', ->
@@ -148,7 +156,9 @@ root.views =
   library_info: postable_info
   group_info: postable_info
   postable_members: postable_members
+  postable_inviteds: postable_inviteds
 root.templates =
   library_info: library_info_template
   group_info: group_info_template
   postable_members: postable_members_template
+  postable_inviteds: postable_inviteds_template

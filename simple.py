@@ -513,8 +513,11 @@ def addMemberToLibrary_or_libraryMembers(libraryowner, libraryname):
 #######################################################################################################################
 def postable(ownernick, name, ptypestr):
     fqpn=ownernick+"/"+ptypestr+":"+name
-    postable=g.db.getPostable(g.currentuser, fqpn)
-    return postable
+    postable=g.db.getPostableInfo(g.currentuser, g.currentuser, fqpn)
+    isowner=False
+    if g.db.isOwnerOfPostable(g.currentuser, g.currentuser, postable):
+        isowner=True
+    return postable, isowner
 
 
 #POST/GET in a lightbox?
@@ -526,19 +529,19 @@ def creategrouphtml():
 #x
 @adsgut.route('/group/<groupowner>/group:<groupname>')
 def groupInfo(groupowner, groupname):
-    return jsonify(group=postable(groupowner, groupname, "group"))
+    return jsonify(group=postable(groupowner, groupname, "group")[0])
 
 #x
 @adsgut.route('/group/<groupowner>/group:<groupname>/profile/html')
 def groupProfileHtml(groupowner, groupname):
-    group=postable(groupowner, groupname, "group")
-    return render_template('groupprofile.html', thegroup=group)
+    group, owner=postable(groupowner, groupname, "group")
+    return render_template('groupprofile.html', thegroup=group, owner=owner)
 
 @adsgut.route('/group/<groupowner>/group:<groupname>/filter/html')
 def groupFilterHtml(groupowner, groupname):
     querystring=request.query_string
-    group=postable(groupowner, groupname, "group")
-    return render_template('groupfilter.html', thegroup=group, querystring=querystring)
+    group, owner=postable(groupowner, groupname, "group")
+    return render_template('groupfilter.html', thegroup=group, querystring=querystring, owner=owner)
 
 # @adsgut.route('/group/<groupowner>/group:<groupname>/items')
 # def groupItems(groupowner, groupname):
@@ -558,13 +561,13 @@ def createapphtml():
 #x
 @adsgut.route('/app/<appowner>/app:<appname>')
 def appInfo(appowner, appname):
-    return jsonify(app=postable(appowner, appname, "app"))
+    return jsonify(app=postable(appowner, appname, "app")[0])
 
 #x
 @adsgut.route('/app/<appowner>/app:<appname>/profile/html')
 def appProfileHtml(appowner, appname):
-    app=postable(appowner, appname, "app")
-    return render_template('appprofile.html', theapp=app)
+    app, owner=postable(appowner, appname, "app")
+    return render_template('appprofile.html', theapp=app, owner=owner)
 
 # @adsgut.route('/app/<appowner>/app:<appname>/items')
 # def appItems(appowner, appname):
@@ -584,32 +587,32 @@ def createlibraryhtml():
 #x
 @adsgut.route('/library/<libraryowner>/library:<libraryname>')
 def libraryInfo(libraryowner, libraryname):
-    return jsonify(library=postable(libraryowner, libraryname, "library"))
+    return jsonify(library=postable(libraryowner, libraryname, "library")[0])
 
 #x
 @adsgut.route('/library/<libraryowner>/library:<libraryname>/profile/html')
 def libraryProfileHtml(libraryowner, libraryname):
-    library=postable(libraryowner, libraryname, "library")
-    return render_template('libraryprofile.html', thelibrary=library)
+    library, owner=postable(libraryowner, libraryname, "library")
+    return render_template('libraryprofile.html', thelibrary=library, owner=owner)
 
 @adsgut.route('/library/<libraryowner>/library:<libraryname>/filter/html')
 def libraryFilterHtml(libraryowner, libraryname):
     querystring=request.query_string
-    library=postable(libraryowner, libraryname, "library")
-    return render_template('libraryfilter.html', thelibrary=library, querystring=querystring)
+    library, owner=postable(libraryowner, libraryname, "library")
+    return render_template('libraryfilter.html', thelibrary=library, querystring=querystring, owner=owner)
 
 
 @adsgut.route('/postable/<po>/<pt>:<pn>/filter/html')
 def postableFilterHtml(po, pt, pn):
     querystring=request.query_string
-    p=postable(po, pn, pt)
+    p, owner=postable(po, pn, pt)
     if pn=='default' and pt=='group':
         tqtype='stags'
     else:
         tqtype='tagname'
     tqtype='tagname'
     #BUG using currentuser right now. need to support a notion of useras
-    return render_template('postablefilter.html', p=p, querystring=querystring, tqtype=tqtype, useras=g.currentuser)
+    return render_template('postablefilter.html', p=p, querystring=querystring, tqtype=tqtype, useras=g.currentuser, owner=owner)
 # @adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
 # def libraryItems(libraryowner, libraryname):
 #     library=postable(libraryowner, libraryname, "library")
