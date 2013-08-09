@@ -147,6 +147,39 @@ group_info_template = renderable (data) ->
 postable_info = (data, template) ->
   template(data)
 
+#content=widgets.one_submit_with_cb("invite_user","Invite a user using their email:", "Invite", "Can Post?")
+#$('div#invitedform').append(content)
+#content=widgets.dropdown_submit_with_cb("add_group", ['a','b','c'],"Add a group you are a member of:","Add", "Can Post?")
+
+class InviteUser extends Backbone.View
+
+  tagName: 'div'
+  initialize: (model, options) ->
+    {withcb} = options ? {withcb:false}
+    if withcb
+      @content=widgets.one_submit_with_cb("Invite a user using their email:", "Invite", "Can Post?")
+    else
+      @content=widgets.one_submit("Invite a user using their email:", "Invite")
+
+  render: () =>
+    this.$el.html(@content)
+    return this
+
+class AddGroup extends Backbone.View
+
+  tagName: 'div'
+  initialize: (model, groups, options) ->
+    {withcb} = options ? {withcb:false}
+    if withcb
+      @content=widgets.dropdown_submit_with_cb(groups,"Add a group you are a member of:","Add", "Can Post?")
+    else
+      @content=widgets.dropdown_submit(groups,"Add a group you are a member of:","Add")
+
+  render: () =>
+    this.$el.html(@content)
+    return this
+
+
 root.get_tags = get_tags
 root.get_taggings = get_taggings
 root.format_items = format_items
@@ -157,6 +190,8 @@ root.views =
   group_info: postable_info
   postable_members: postable_members
   postable_inviteds: postable_inviteds
+  InviteUser: InviteUser
+  AddGroup: AddGroup
 root.templates =
   library_info: library_info_template
   group_info: group_info_template

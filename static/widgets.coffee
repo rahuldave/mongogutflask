@@ -24,22 +24,22 @@ table_from_dict = h.renderable (kcol, vcol, dict) ->
 #   <button class="btn" type="button">Go!</button>
 # </div>
 #one_submit needs to have an event handler added
-one_submit = h.renderable (wname, ltext, btext) ->
+one_submit = h.renderable (ltext, btext) ->
     h.label ltext
-    h.form "##{wname}.form-inline", ->
+    h.form ".form-inline", ->
         h.input ".span3", type: 'text'
         h.button ".btn", type: 'button', btext
 
-one_submit_with_cb = h.renderable (wname, ltext, btext, ctext) ->
+one_submit_with_cb = h.renderable (ltext, btext, ctext) ->
     h.label ltext
-    h.form "##{wname}.form-inline", ->
+    h.form ".form-inline", ->
         h.input ".span3", type: 'text'
         h.label '.checkbox', ->
             h.input type: 'checkbox'
             h.text ctext
         h.button ".btn", type: 'button', btext
 
-dropdown_submit = h.renderable (wname, selects, ltext, btext) ->
+dropdown_submit = h.renderable (selects, ltext, btext) ->
     h.label ltext
     h.form '##{wname}.form-inline', ->
         h.select ->
@@ -47,9 +47,9 @@ dropdown_submit = h.renderable (wname, selects, ltext, btext) ->
                 h.option s
         h.button ".btn", type: 'button', btext
 
-dropdown_submit_with_cb = h.renderable (wname, selects, ltext, btext, ctext) ->
+dropdown_submit_with_cb = h.renderable (selects, ltext, btext, ctext) ->
     h.label ltext
-    h.form '##{wname}.form-inline', ->
+    h.form '.form-inline', ->
         h.select ->
             for s in selects
                 h.option s

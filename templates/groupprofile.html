@@ -16,6 +16,7 @@
 {% block coffeescript %}
 $=jQuery
 $ -> 
+  model={}
   console?.log "Hello World"
   $.get "/group/{{ thegroup.basic.fqin}}", (data) ->
     console?.log data
@@ -27,8 +28,8 @@ $ ->
     $('div#members').append(content)
     $('div#members').show()
   {% if owner %}
-  content=widgets.one_submit("invite_user","Invite a user using their email:", "Invite")
-  $('div#invitedform').append(content)
+  view=new views.InviteUser(model)
+  $('div#invitedform').append(view.render().$el)
   $('div#invitedform').show()
   $.get "/group/{{ thegroup.basic.fqin}}/inviteds", (data) ->
     content=views.postable_inviteds data, templates.postable_inviteds

@@ -45,9 +45,9 @@
     });
   });
 
-  one_submit = h.renderable(function(wname, ltext, btext) {
+  one_submit = h.renderable(function(ltext, btext) {
     h.label(ltext);
-    return h.form("#" + wname + ".form-inline", function() {
+    return h.form(".form-inline", function() {
       h.input(".span3", {
         type: 'text'
       });
@@ -57,9 +57,9 @@
     });
   });
 
-  one_submit_with_cb = h.renderable(function(wname, ltext, btext, ctext) {
+  one_submit_with_cb = h.renderable(function(ltext, btext, ctext) {
     h.label(ltext);
-    return h.form("#" + wname + ".form-inline", function() {
+    return h.form(".form-inline", function() {
       h.input(".span3", {
         type: 'text'
       });
@@ -75,7 +75,7 @@
     });
   });
 
-  dropdown_submit = h.renderable(function(wname, selects, ltext, btext) {
+  dropdown_submit = h.renderable(function(selects, ltext, btext) {
     h.label(ltext);
     return h.form('##{wname}.form-inline', function() {
       h.select(function() {
@@ -93,9 +93,9 @@
     });
   });
 
-  dropdown_submit_with_cb = h.renderable(function(wname, selects, ltext, btext, ctext) {
+  dropdown_submit_with_cb = h.renderable(function(selects, ltext, btext, ctext) {
     h.label(ltext);
-    return h.form('##{wname}.form-inline', function() {
+    return h.form('.form-inline', function() {
       h.select(function() {
         var s, _i, _len, _results;
         _results = [];

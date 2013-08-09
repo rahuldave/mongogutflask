@@ -17,6 +17,7 @@
 $=jQuery
 $ -> 
   console?.log "Hello World"
+  model={}
   $.get "/library/{{ thelibrary.basic.fqin}}", (data) ->
     console?.log data
     content=views.library_info data, templates.library_info
@@ -27,10 +28,10 @@ $ ->
     $('div#members').append(content)
     $('div#members').show()
   {% if owner %}
-  content=widgets.one_submit_with_cb("invite_user","Invite a user using their email:", "Invite", "Can Post?")
-  $('div#invitedform').append(content)
-  content=widgets.dropdown_submit_with_cb("add_group", ['a','b','c'],"Add a group you are a member of:","Add", "Can Post?")
-  $('div#invitedform').append(content)
+  view=new views.InviteUser(model, {withcb:true})
+  $('div#invitedform').append(view.render().$el)
+  view=new views.AddGroup(model, ['a','b'],{withcb:true} )
+  $('div#invitedform').append(view.render().$el)
   $('div#invitedform').show()
   $.get "/library/{{ thelibrary.basic.fqin}}/inviteds", (data) ->
     content=views.postable_inviteds data, templates.postable_inviteds
