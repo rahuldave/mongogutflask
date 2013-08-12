@@ -1,10 +1,24 @@
 {% extends "layout.html" %}
 {% block body %}
-    <h2>User {{theuser.nick}}</h2>
-    <h3>User Info</h3>
-  <iframe width="100%" src="/user/{{ theuser.nick}}"></iframe width="100%">
-  <hr/>
-  <h3>Groups</h3>
+  <h3>User {{theuser.nick}}</h3>
+  <h4>User Info</h4>
+  <!--iframe width="100%" src="/user/{{ theuser.nick}}"></iframe width="100%"-->
+  <div id="userinfo" style="display:none"></div>
+  <br/>
+  <h4>Groups</h4>
+    <div class="row" id="groups">
+      <div class="span3 ow"></div>
+      <div class="span3 in"></div>
+      <div class="span3 iv"></div>
+    </div>
+  <br/>
+  <h4>Libraries</h4>
+    <div class="row" is="libraries">
+      <div class="span3 ow">Owned</div>
+      <div class="span3 in">In</div>
+      <div class="span3 iv">Invitations</div>
+    </div>
+  <!--h3>Groups</h3>
     <h5>Groups In</h5>
   <iframe width="100%" src="/user/{{ theuser.nick}}/groupsuserisin"></iframe width="100%">
     <h5>Groups Owned</h5>
@@ -21,5 +35,24 @@
   <iframe width="100%" src="/user/{{ theuser.nick}}/librariesuserisinvitedto"></iframe width="100%">
 
   <h5>User's items (user default group)</h5>
-  <iframe width="100%" src="/user/{{ theuser.nick}}/items"></iframe width="100%">
+  <iframe width="100%" src="/user/{{ theuser.nick}}/items"></iframe width="100%"-->
+
+{% endblock %}
+{% block coffeescript %}
+$=jQuery
+$ -> 
+  $.get "/user/{{ theuser.nick}}", (data) ->
+    userdict=userprofile.parse_userinfo(data)
+    content=widgets.info_layout(userdict.userinfo, name:'Name', nick:'Nickname', whenjoined:'Joined')
+    $('#userinfo').append(content)
+    $('#userinfo').show()
+    $('#groups div.ow').append(widgets.one_col_table('Owned', userdict.groupsowned))
+    pli=new userprofile.PostableList(userdict.groupsin, "Grappa", false)
+    pliv=new userprofile.PostableListView(pli, '#groups div.in')
+    pliv.render()
+    #$('#groups div.in').append(widgets.one_col_table('In', userdict.groupsin))
+    ivdict={}
+    for k in userdict.groupsinvitedto
+      ivdict[k]='Yes'
+    $('#groups div.iv').append(widgets.table_from_dict('Invited', 'Accept?', ivdict))
 {% endblock %}

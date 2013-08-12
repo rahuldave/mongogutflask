@@ -48,10 +48,8 @@
         </div><!--/span-->
         <div class="span9">
 
-          <div class="row-fluid">
-            <div class=page>
+          <div class="row-fluid page">
                 {% block body %}{% endblock %}
-            </div>
           </div><!--/row-->
         </div><!--/span-->
     </div><!--/row-fluid-->
@@ -68,6 +66,7 @@
 <script src="{{ url_for('static', filename='teacup.js') }}"></script>
 <script src="{{ url_for('static', filename='widgets.js') }}"></script>
 <script src="{{ url_for('static', filename='funcs.js') }}"></script>
+<script src="{{ url_for('static', filename='userprofile.js') }}"></script>
 
 {% block scripturls %}{% endblock %}
 <script>

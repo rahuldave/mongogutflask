@@ -132,7 +132,7 @@ postable_info_layout = renderable ({basic, owner}) ->
     dd owner
     dt "Creator"
     dd basic.creator
-    dt "Cteated on"
+    dt "Created on"
     dd basic.whencreated
 
 library_info_template = renderable (data) ->
