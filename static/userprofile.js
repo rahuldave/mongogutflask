@@ -107,9 +107,6 @@
     }
 
     Postable.prototype.initialize = function(fqpn, invite) {
-      if (invite == null) {
-        invite = false;
-      }
       this.fqpn = fqpn;
       return this.invite = invite;
     };
@@ -135,7 +132,7 @@
     PostableView.prototype.initialize = function(model) {
       console.log("v1");
       this.model = model;
-      return typeof console !== "undefined" && console !== null ? console.log(this.model) : void 0;
+      return typeof console !== "undefined" && console !== null ? console.log("GGGG", this.model) : void 0;
     };
 
     PostableView.prototype.render = function() {
@@ -145,7 +142,7 @@
       } else {
         content = w.one_col_table_partial(this.model.fqpn);
         if (typeof console !== "undefined" && console !== null) {
-          console.log("fff", content);
+          console.log("fff", content, this.model.fqpn);
         }
         this.$(this.el).html(content);
       }
@@ -164,27 +161,26 @@
       return PostableList.__super__.constructor.apply(this, arguments);
     }
 
-    PostableList.prototype.model = Postable;
-
     PostableList.prototype.initialize = function(fqpns, listtype, invite) {
-      var fqpnmods, p;
-      if (invite == null) {
-        invite = false;
-      }
-      console.log("m1");
+      var fqpnmods, m, p, _i, _len;
+      this.fqpns = fqpns;
       this.listtype = listtype;
       this.invite = invite;
       fqpnmods = (function() {
-        var _i, _len, _results;
+        var _i, _len, _ref, _results;
+        _ref = this.fqpns;
         _results = [];
-        for (_i = 0, _len = fqpns.length; _i < _len; _i++) {
-          p = fqpns[_i];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          p = _ref[_i];
           _results.push(new Postable(p, invite));
         }
         return _results;
-      })();
-      console.log(fqpnmods);
-      return this.add(fqpnmods);
+      }).call(this);
+      for (_i = 0, _len = fqpnmods.length; _i < _len; _i++) {
+        m = fqpnmods[_i];
+        this.add(m);
+      }
+      return console.log("BB", this.models.length, this);
     };
 
     return PostableList;
@@ -203,15 +199,20 @@
       return PostableListView.__super__.constructor.apply(this, arguments);
     }
 
-    PostableListView.prototype.initialize = function(coll, uniqel) {
-      console.log("h1");
-      this.collection = coll;
-      return this.el = $(uniqel);
+    PostableListView.prototype.tmap = {
+      "in": "In",
+      ow: "Owned",
+      iv: "Invited"
+    };
+
+    PostableListView.prototype.initialize = function(collection, $e_el) {
+      this.collection = collection;
+      return this.$el = $e_el;
     };
 
     PostableListView.prototype.render = function() {
-      var m, v, views, widget;
-      console.log("h2", this.collection.models);
+      var m, v, views, widget, _i, _len;
+      console.log("h2", this.collection);
       views = (function() {
         var _i, _len, _ref, _results;
         _ref = this.collection.models;
@@ -222,29 +223,32 @@
         }
         return _results;
       }).call(this);
-      console.log("h3");
+      for (_i = 0, _len = views.length; _i < _len; _i++) {
+        v = views[_i];
+        console.log("h3", v.render().el);
+      }
       if (this.collection.invite) {
         widget = w.table_from_dict("Invitations", "Accept?", (function() {
-          var _i, _len, _results;
+          var _j, _len1, _results;
           _results = [];
-          for (_i = 0, _len = views.length; _i < _len; _i++) {
-            v = views[_i];
+          for (_j = 0, _len1 = views.length; _j < _len1; _j++) {
+            v = views[_j];
             _results.push(v.render().el);
           }
           return _results;
         })(), true);
       } else {
-        widget = w.one_col_table(this.collection.listtype, (function() {
-          var _i, _len, _results;
+        widget = w.one_col_table(this.tmap[this.collection.listtype], (function() {
+          var _j, _len1, _results;
           _results = [];
-          for (_i = 0, _len = views.length; _i < _len; _i++) {
-            v = views[_i];
+          for (_j = 0, _len1 = views.length; _j < _len1; _j++) {
+            v = views[_j];
             _results.push(v.render().el);
           }
           return _results;
         })(), true);
       }
-      return this.$("div." + this.collection.listtype).html(widget);
+      return this.$el.html(widget);
     };
 
     return PostableListView;

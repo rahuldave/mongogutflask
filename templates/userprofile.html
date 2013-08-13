@@ -47,8 +47,9 @@ $ ->
     $('#userinfo').append(content)
     $('#userinfo').show()
     $('#groups div.ow').append(widgets.one_col_table('Owned', userdict.groupsowned))
-    pli=new userprofile.PostableList(userdict.groupsin, "Grappa", false)
-    pliv=new userprofile.PostableListView(pli, '#groups div.in')
+    pli=new userprofile.PostableList(userdict.groupsin,"in", false)
+    console.log ">>>",pli.models
+    pliv=new userprofile.PostableListView(pli, $('#groups div.in'))
     pliv.render()
     #$('#groups div.in').append(widgets.one_col_table('In', userdict.groupsin))
     ivdict={}

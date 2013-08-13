@@ -27,7 +27,7 @@ parse_userinfo = (data) ->
 
 class Postable extends Backbone.Model
 
-    initialize: (fqpn, invite=false)->
+    initialize: (fqpn, invite)->
         @fqpn=fqpn
         @invite=invite
 
@@ -38,14 +38,14 @@ class PostableView extends Backbone.View
     initialize: (model)->
         console.log("v1")
         @model=model
-        console?.log @model
+        console?.log "GGGG", @model
        
     render: =>
         if @model.invite
             this.$(@el).html(w.table_from_dict_partial(@model.fqpn, 'X'))
         else
             content=w.one_col_table_partial(@model.fqpn)
-            console?.log("fff", content)
+            console?.log("fff", content, @model.fqpn)
             this.$(@el).html(content)
         return this
 
@@ -53,34 +53,38 @@ class PostableView extends Backbone.View
 
 class PostableList extends Backbone.Collection
     
-    model: Postable
+    #model: Postable
 
-    initialize: (fqpns, listtype, invite=false) ->
-        console.log("m1")
+    initialize: (fqpns, listtype, invite) ->
+        @fqpns=fqpns
         @listtype=listtype
         @invite=invite
-        fqpnmods=(new Postable(p, invite) for p in fqpns)
-        console.log fqpnmods
-        @add(fqpnmods)
+        fqpnmods=(new Postable(p,invite) for p in @fqpns)
+        for m in fqpnmods
+            @add(m)
+        console.log "BB", @models.length, this
 
 #BUG: do we not need to destroy when we move things around?
 #also invite isnt enough to have the event based interplay between 2 lists
 class PostableListView extends Backbone.View
+    tmap:
+        in: "In"
+        ow: "Owned"
+        iv: "Invited"
 
-    initialize: (coll, uniqel) ->
-        console.log("h1")
-        @collection=coll
-        @el=$(uniqel)
+    initialize: (collection, $e_el) ->
+        @collection=collection
+        @$el=$e_el
 
     render: =>
-        console.log "h2", @collection.models
+        console.log "h2", @collection
         views=(new PostableView(m) for m in @collection.models)
-        console.log "h3"
+        console.log "h3", v.render().el for v in views
         if @collection.invite
             widget=w.table_from_dict("Invitations", "Accept?", (v.render().el for v in views), true)
         else
-            widget=w.one_col_table(@collection.listtype, (v.render().el for v in views), true)
-        this.$("div.#{@collection.listtype}").html(widget)
+            widget=w.one_col_table(@tmap[@collection.listtype], (v.render().el for v in views), true)
+        @$el.html(widget)
 
 
 root.userprofile=
