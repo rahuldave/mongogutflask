@@ -27,42 +27,31 @@ parse_userinfo = (data) ->
 
 class Postable extends Backbone.Model
 
-    initialize: (fqpn, invite)->
-        @fqpn=fqpn
-        @invite=invite
 
 class PostableView extends Backbone.View
 
     tagName: "tr"
-
-    initialize: (model)->
-        console.log("v1")
-        @model=model
-        console?.log "GGGG", @model
        
     render: =>
-        if @model.invite
-            this.$(@el).html(w.table_from_dict_partial(@model.fqpn, 'X'))
+
+        if @model.get('invite')
+            console.log "??", w.table_from_dict_partial(@model.get('fqpn'), 'X')
+            @$el.html(w.table_from_dict_partial(@model.get('fqpn'), 'X'))
         else
-            content=w.one_col_table_partial(@model.fqpn)
-            console?.log("fff", content, @model.fqpn)
-            this.$(@el).html(content)
+            console.log '//'
+            content=w.one_col_table_partial(@model.get('fqpn'))
+            @$el.html(content)
         return this
 
 
 
 class PostableList extends Backbone.Collection
     
-    #model: Postable
+    model: Postable
 
-    initialize: (fqpns, listtype, invite) ->
-        @fqpns=fqpns
-        @listtype=listtype
-        @invite=invite
-        fqpnmods=(new Postable(p,invite) for p in @fqpns)
-        for m in fqpnmods
-            @add(m)
-        console.log "BB", @models.length, this
+    initialize: (models, options) ->
+        @listtype=options.listtype
+        @invite=options.invite
 
 #BUG: do we not need to destroy when we move things around?
 #also invite isnt enough to have the event based interplay between 2 lists
@@ -72,22 +61,22 @@ class PostableListView extends Backbone.View
         ow: "Owned"
         iv: "Invited"
 
-    initialize: (collection, $e_el) ->
-        @collection=collection
-        @$el=$e_el
+    initialize: (options) ->
+        @$el=options.$e_el
 
     render: =>
         console.log "h2", @collection
-        views=(new PostableView(m) for m in @collection.models)
+        views=(new PostableView(model:m) for m in @collection.models)
         console.log "h3", v.render().el for v in views
         if @collection.invite
-            widget=w.table_from_dict("Invitations", "Accept?", (v.render().el for v in views), true)
+            $widget=w.$table_from_dict("Invitations", "Accept?", (v.render().el for v in views))
         else
-            widget=w.one_col_table(@tmap[@collection.listtype], (v.render().el for v in views), true)
-        @$el.html(widget)
+            $widget=w.$one_col_table(@tmap[@collection.listtype], (v.render().el for v in views))
+        @$el.append($widget)
 
 
 root.userprofile=
     parse_userinfo: parse_userinfo
+    Postable: Postable
     PostableList: PostableList
     PostableListView: PostableListView

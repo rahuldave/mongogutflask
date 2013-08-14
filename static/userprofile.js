@@ -106,11 +106,6 @@
       return Postable.__super__.constructor.apply(this, arguments);
     }
 
-    Postable.prototype.initialize = function(fqpn, invite) {
-      this.fqpn = fqpn;
-      return this.invite = invite;
-    };
-
     return Postable;
 
   })(Backbone.Model);
@@ -129,22 +124,15 @@
 
     PostableView.prototype.tagName = "tr";
 
-    PostableView.prototype.initialize = function(model) {
-      console.log("v1");
-      this.model = model;
-      return typeof console !== "undefined" && console !== null ? console.log("GGGG", this.model) : void 0;
-    };
-
     PostableView.prototype.render = function() {
       var content;
-      if (this.model.invite) {
-        this.$(this.el).html(w.table_from_dict_partial(this.model.fqpn, 'X'));
+      if (this.model.get('invite')) {
+        console.log("??", w.table_from_dict_partial(this.model.get('fqpn'), 'X'));
+        this.$el.html(w.table_from_dict_partial(this.model.get('fqpn'), 'X'));
       } else {
-        content = w.one_col_table_partial(this.model.fqpn);
-        if (typeof console !== "undefined" && console !== null) {
-          console.log("fff", content, this.model.fqpn);
-        }
-        this.$(this.el).html(content);
+        console.log('//');
+        content = w.one_col_table_partial(this.model.get('fqpn'));
+        this.$el.html(content);
       }
       return this;
     };
@@ -161,26 +149,11 @@
       return PostableList.__super__.constructor.apply(this, arguments);
     }
 
-    PostableList.prototype.initialize = function(fqpns, listtype, invite) {
-      var fqpnmods, m, p, _i, _len;
-      this.fqpns = fqpns;
-      this.listtype = listtype;
-      this.invite = invite;
-      fqpnmods = (function() {
-        var _i, _len, _ref, _results;
-        _ref = this.fqpns;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          p = _ref[_i];
-          _results.push(new Postable(p, invite));
-        }
-        return _results;
-      }).call(this);
-      for (_i = 0, _len = fqpnmods.length; _i < _len; _i++) {
-        m = fqpnmods[_i];
-        this.add(m);
-      }
-      return console.log("BB", this.models.length, this);
+    PostableList.prototype.model = Postable;
+
+    PostableList.prototype.initialize = function(models, options) {
+      this.listtype = options.listtype;
+      return this.invite = options.invite;
     };
 
     return PostableList;
@@ -205,13 +178,12 @@
       iv: "Invited"
     };
 
-    PostableListView.prototype.initialize = function(collection, $e_el) {
-      this.collection = collection;
-      return this.$el = $e_el;
+    PostableListView.prototype.initialize = function(options) {
+      return this.$el = options.$e_el;
     };
 
     PostableListView.prototype.render = function() {
-      var m, v, views, widget, _i, _len;
+      var $widget, m, v, views, _i, _len;
       console.log("h2", this.collection);
       views = (function() {
         var _i, _len, _ref, _results;
@@ -219,7 +191,9 @@
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           m = _ref[_i];
-          _results.push(new PostableView(m));
+          _results.push(new PostableView({
+            model: m
+          }));
         }
         return _results;
       }).call(this);
@@ -228,7 +202,7 @@
         console.log("h3", v.render().el);
       }
       if (this.collection.invite) {
-        widget = w.table_from_dict("Invitations", "Accept?", (function() {
+        $widget = w.$table_from_dict("Invitations", "Accept?", (function() {
           var _j, _len1, _results;
           _results = [];
           for (_j = 0, _len1 = views.length; _j < _len1; _j++) {
@@ -236,9 +210,9 @@
             _results.push(v.render().el);
           }
           return _results;
-        })(), true);
+        })());
       } else {
-        widget = w.one_col_table(this.tmap[this.collection.listtype], (function() {
+        $widget = w.$one_col_table(this.tmap[this.collection.listtype], (function() {
           var _j, _len1, _results;
           _results = [];
           for (_j = 0, _len1 = views.length; _j < _len1; _j++) {
@@ -246,9 +220,9 @@
             _results.push(v.render().el);
           }
           return _results;
-        })(), true);
+        })());
       }
-      return this.$el.html(widget);
+      return this.$el.append($widget);
     };
 
     return PostableListView;
@@ -257,6 +231,7 @@
 
   root.userprofile = {
     parse_userinfo: parse_userinfo,
+    Postable: Postable,
     PostableList: PostableList,
     PostableListView: PostableListView
   };

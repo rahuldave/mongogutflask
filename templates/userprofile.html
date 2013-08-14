@@ -47,13 +47,17 @@ $ ->
     $('#userinfo').append(content)
     $('#userinfo').show()
     $('#groups div.ow').append(widgets.one_col_table('Owned', userdict.groupsowned))
-    pli=new userprofile.PostableList(userdict.groupsin,"in", false)
-    console.log ">>>",pli.models
-    pliv=new userprofile.PostableListView(pli, $('#groups div.in'))
-    pliv.render()
+    plin=new userprofile.PostableList([],listtype:"in", invite:false)
+    plin.add((new userprofile.Postable(fqpn:p, invite:plin.invite) for p in userdict.groupsin))
+    plinv=new userprofile.PostableListView(collection:plin, $e_el:$('#groups div.in'))
+    plinv.render()
     #$('#groups div.in').append(widgets.one_col_table('In', userdict.groupsin))
     ivdict={}
-    for k in userdict.groupsinvitedto
-      ivdict[k]='Yes'
-    $('#groups div.iv').append(widgets.table_from_dict('Invited', 'Accept?', ivdict))
+    #for k in userdict.groupsinvitedto
+    #  ivdict[k]='Yes'
+    #$('#groups div.iv').append(widgets.table_from_dict('Invited', 'Accept?', ivdict))
+    pliv=new userprofile.PostableList([],listtype:"iv", invite:true)
+    pliv.add((new userprofile.Postable(fqpn:p, invite:pliv.invite) for p in userdict.groupsinvitedto))
+    plivv=new userprofile.PostableListView(collection:pliv, $e_el:$('#groups div.iv'))
+    plivv.render()
 {% endblock %}

@@ -17,39 +17,56 @@ table_from_dict_partial = h.renderable (k,v) ->
     h.td k
     h.td v
 
-table_from_dict = h.renderable (kcol, vcol, dict_or_vlist, vmode=false) ->
+table_from_dict = h.renderable (kcol, vcol, dict) ->
     h.table '.table.table-bordered.table-condensed.table-striped',  ->
         h.thead ->
             h.tr ->
                 h.th kcol
                 h.th vcol
         h.tbody ->
-            if vmode
-                for v in dict_or_vlist
-                    v
-            else
-                for k,v of dict_or_vlist
-                    h.tr ->
-                        table_from_dict_partial(k,v)
+            for k,v of dict
+                h.tr ->
+                    table_from_dict_partial(k,v)
+
+$table_from_dict = (kcol, vcol, vlist) ->
+    f=h.renderable (kcol, vcol) ->
+        h.table '.table.table-bordered.table-condensed.table-striped',  ->
+            h.thead ->
+                h.tr ->
+                    h.th kcol
+                    h.th vcol
+            h.tbody
+    $f=$(f(kcol,vcol))
+    for k in vlist
+        $f.append(k)
+    return $f
 
 
 one_col_table_partial = h.renderable (k) ->
     h.td k
 
-one_col_table = h.renderable (kcol, tlist_or_vlist, vmode=false) ->
+one_col_table = h.renderable (kcol, tlist) ->
     h.table '.table.table-bordered.table-condensed',  ->
         h.thead ->
             h.tr ->
                 h.th kcol
         h.tbody ->
-            if vmode
-                for v in tlist_or_vlist
-                    v
-            else
+            for k in tlist
                 h.tr ->
-                    for k in tlist_or_vlist
-                        one_col_table_partial k
-                
+                    one_col_table_partial k
+
+$one_col_table = (kcol, vlist) ->
+    f=h.renderable (kcol) ->
+        h.table '.table.table-bordered.table-condensed',  ->
+            h.thead ->
+                h.tr ->
+                    h.th kcol
+            h.tbody
+    $f=$(f(kcol))
+    for k in vlist
+        $f.append(k)
+    return $f
+
 # <div class="input-append">
 #   <input class="span2" id="appendedInputButton" type="text">
 #   <button class="btn" type="button">Go!</button>
@@ -103,7 +120,9 @@ root.widgets =
     one_col_table_partial: one_col_table_partial
     table_from_dict_partial: table_from_dict_partial
     one_col_table: one_col_table
+    $one_col_table: $one_col_table
     table_from_dict: table_from_dict
+    $table_from_dict: $table_from_dict
     one_submit: one_submit
     dropdown_submit: dropdown_submit
     one_submit_with_cb: one_submit_with_cb
