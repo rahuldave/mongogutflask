@@ -1,8 +1,12 @@
 {% extends "layout.html" %}
 {% block body %}
-    <h2>Saving {{itemtype}}s</h2>
+    <h3>Saving {{itemtype}}s</h3>
 <form id="items">
-    <legend>Tagging and Posting</legend>
+  <div class="row">
+      <div class="span5 items"></div>
+      <div class="span4 ctrls"></div>
+  </div>
+    <!--legend>Tagging and Posting</legend>
     {% if nameable %}
       <div class="control-group">
         <label class="control-label">Name this {{itemtype}}</label>
@@ -26,7 +30,7 @@
       <label class="control-label">Tags</label>
       <input class="controls" type="text" placeholder="Tag Name…">
     </div>
-    <button type="submit" class="btn">Submit</button>
+    <button type="submit" class="btn">Submit</button-->
 
 </form>
 {% endblock %}
@@ -36,6 +40,10 @@ $=jQuery
 console.log "In Postform"
 #currently below only works for pubs, but ought to work otherwise too
 $ -> 
+  nam=false
+  {% if nameable %}
+  nam=true
+  {% endif %}
   vars="{{ querystring | safe }}"
   console.log "VARS",vars
   $.get "/itemsinfo?#{vars}", (data) ->
@@ -54,6 +62,7 @@ $ ->
           postings[k]=(e.thething.postfqin for e in v[1])
         else
           postings[k]=[]
-      format_items $('#items'), "{{useras.nick}}", theitems, thecount, stags, notes, postings, "div", true
+      $('#items .ctrls').append(widgets.postalall_form(nam,'{{itemtype}}'))
+      format_items $('#items .items'), "{{useras.nick}}", theitems, thecount, stags, notes, postings, "div", true
       add_libs_and_groups $('#libslabel'), $('#groupslabel'), "{{useras.nick}}"
 {% endblock %}

@@ -6,19 +6,14 @@
 {% endblock %}
 
 {% block body %}
-{% if pflavor=='udg' %}
-<h3>Items for {{useras.nick}}</h3>
-{% elif pflavor=='pub' %}
-<h3>Public Items</h3>
-{% else %}
-<h3>Items in {{ p.classname }} <a href="/postable/{{p.basic.fqin}}/filter/html">{{p.basic.fqin}}</a></h3>
+<h3>{{ p.classname }} <a href="/postable/{{p.basic.fqin}}/filter/html">{{p.basic.fqin}}</a></h3>
 <p>
   <a href="" id="useradder" data="off">Add user filter</a> for currentuser {{ useras.nick }}
 </p>
-{% endif %}
 <p id="breadcrumb">
 Breadcrumb {{ querystring }}
 </p>
+<h3>Items</h3>
 <ul id="items">
 </ul>
 

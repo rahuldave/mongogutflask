@@ -25,6 +25,7 @@ console.log "In Filtera"
 
 format_tags = ($sel, tags)->
   htmlstring="<li class=\"nav-header\">TAGS</li>"
+  console.log ":::", tags
   for t in tags
     nonqloc=document.location.href.split('?')[0]
     url=nonqloc+"?query=stags:#{t}"
@@ -33,6 +34,7 @@ format_tags = ($sel, tags)->
       urla=document.location+"?query=stags:#{t}"
     
     htmlstring = htmlstring+"<li><span><a href=\"#{url}\">#{t}</a>&nbsp;<a href=\"#{urla}\">(+)</a></span></li>"
+  console.log("htmlstring", htmlstring)
   $sel.html(htmlstring)
 
 
@@ -55,8 +57,8 @@ format_items = ($sel, items, count, taggings, postings)->
 $ ->
   vars="{{ querystring | safe }}"
   $.get "/postable/{{ thegroup.basic.fqin}}/tags?#{vars}", (data) ->
-    console.log "Tag Count", data.count, vars
-    format_tags($('#stags'), data.tags)
+    console.log "Tag Count", data.count, vars, data.tags
+    format_tags($('#stags'), data.tags['ads/tagtype:tag'])
   $.get "/postable/{{ thegroup.basic.fqin}}/items?#{vars}", (data) ->
     console.log "Item Count", data.count, vars
     theitems=data.items

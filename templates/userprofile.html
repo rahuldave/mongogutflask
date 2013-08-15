@@ -13,10 +13,10 @@
     </div>
   <br/>
   <h4>Libraries</h4>
-    <div class="row" is="libraries">
-      <div class="span3 ow">Owned</div>
-      <div class="span3 in">In</div>
-      <div class="span3 iv">Invitations</div>
+    <div class="row" id="libraries">
+      <div class="span3 ow"></div>
+      <div class="span3 in"></div>
+      <div class="span3 iv"></div>
     </div>
   <!--h3>Groups</h3>
     <h5>Groups In</h5>
@@ -40,24 +40,31 @@
 {% endblock %}
 {% block coffeescript %}
 $=jQuery
+
+render_postable = (plist, $pel, ptype, invite) ->
+  plin=new userprofile.PostableList([],listtype:ptype, invite:invite)
+  plin.add((new userprofile.Postable(fqpn:p, invite:plin.invite) for p in plist))
+  plinv=new userprofile.PostableListView(collection:plin, $e_el:$pel)
+  plinv.render()
+
 $ -> 
   $.get "/user/{{ theuser.nick}}", (data) ->
     userdict=userprofile.parse_userinfo(data)
+    console.log userdict
     content=widgets.info_layout(userdict.userinfo, name:'Name', nick:'Nickname', whenjoined:'Joined')
     $('#userinfo').append(content)
     $('#userinfo').show()
+
+    console.log 'GROUPS'
+
     $('#groups div.ow').append(widgets.one_col_table('Owned', userdict.groupsowned))
-    plin=new userprofile.PostableList([],listtype:"in", invite:false)
-    plin.add((new userprofile.Postable(fqpn:p, invite:plin.invite) for p in userdict.groupsin))
-    plinv=new userprofile.PostableListView(collection:plin, $e_el:$('#groups div.in'))
-    plinv.render()
-    #$('#groups div.in').append(widgets.one_col_table('In', userdict.groupsin))
-    ivdict={}
-    #for k in userdict.groupsinvitedto
-    #  ivdict[k]='Yes'
-    #$('#groups div.iv').append(widgets.table_from_dict('Invited', 'Accept?', ivdict))
-    pliv=new userprofile.PostableList([],listtype:"iv", invite:true)
-    pliv.add((new userprofile.Postable(fqpn:p, invite:pliv.invite) for p in userdict.groupsinvitedto))
-    plivv=new userprofile.PostableListView(collection:pliv, $e_el:$('#groups div.iv'))
-    plivv.render()
+
+    plgrpin=render_postable(userdict.groupsin, $('#groups div.in'), 'in', false)
+    plgrpiv=render_postable(userdict.groupsinvitedto, $('#groups div.iv'), 'iv', true)
+
+    console.log "LIBRARIES"
+    $('#libraries div.ow').append(widgets.one_col_table('Owned', userdict.librariesowned))
+
+    plgrpin=render_postable(userdict.librariesin, $('#libraries div.in'), 'in', false)
+    plgrpiv=render_postable(userdict.librariesinvitedto, $('#libraries div.iv'), 'iv', true)
 {% endblock %}

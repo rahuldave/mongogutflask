@@ -78,7 +78,7 @@
       return _results;
     })();
     if (t2list.length > 0) {
-      return "<span>Tagged as " + t2list.join(", ") + "</span>";
+      return "<span>Tagged as " + t2list.join(", ") + "</span><br/>";
     } else {
       return "";
     }
@@ -99,7 +99,7 @@
       return _results;
     })();
     if (p2list.length > 0) {
-      return "<span>Posted in " + p2list.join(", ") + "</span>";
+      return "<span>Posted in " + p2list.join(", ") + "</span><br/>";
     } else {
       return "";
     }
@@ -122,7 +122,7 @@
       htmlstring = htmlstring + format_notes_for_item(fqin, notes, nick);
       htmlstring = htmlstring + ("</" + formatter + ">");
       if (asform) {
-        htmlstring = htmlstring + "<div class=\"control-group\">                              <label class=\"control-label\">Add Note</label>                              <input type=\"text\" class=\"controls input-xxlarge\" placeholder=\"Type a note…\">                              <label class=\"checkbox control-label\">                                <input type=\"checkbox\" class=\"controls\"> Make Private                              </label>                            </div>";
+        htmlstring = htmlstring + w.postalnote_form();
       }
       $sel.prepend(htmlstring);
     }

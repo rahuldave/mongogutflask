@@ -127,10 +127,8 @@
     PostableView.prototype.render = function() {
       var content;
       if (this.model.get('invite')) {
-        console.log("??", w.table_from_dict_partial(this.model.get('fqpn'), 'X'));
-        this.$el.html(w.table_from_dict_partial(this.model.get('fqpn'), 'X'));
+        this.$el.html(w.table_from_dict_partial(this.model.get('fqpn'), w.yes_button('Yes')));
       } else {
-        console.log('//');
         content = w.one_col_table_partial(this.model.get('fqpn'));
         this.$el.html(content);
       }

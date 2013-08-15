@@ -1,8 +1,7 @@
 body            { font-family: sans-serif; background: #eee; padding-top: 60px; padding-bottom: 40px; }
-a, h1, h2       { color: #377BA8; }
+a      { color: #377BA8; }
 h1, h2          { font-family: 'Georgia', serif; margin: 0; }
 h1              { border-bottom: 2px solid #eee; }
-h2              { font-size: 1.2em; }
 .sidebar-nav {
         padding: 9px 0;
 }

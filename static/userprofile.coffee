@@ -35,10 +35,8 @@ class PostableView extends Backbone.View
     render: =>
 
         if @model.get('invite')
-            console.log "??", w.table_from_dict_partial(@model.get('fqpn'), 'X')
-            @$el.html(w.table_from_dict_partial(@model.get('fqpn'), 'X'))
+            @$el.html(w.table_from_dict_partial(@model.get('fqpn'), w.yes_button('Yes')))
         else
-            console.log '//'
             content=w.one_col_table_partial(@model.get('fqpn'))
             @$el.html(content)
         return this

@@ -606,13 +606,17 @@ def libraryFilterHtml(libraryowner, libraryname):
 def postableFilterHtml(po, pt, pn):
     querystring=request.query_string
     p, owner=postable(po, pn, pt)
+    pflavor='pos'
+    if pn=='public' and po=='adsgut' and pt=='group':
+        pflavor='pub'
     if pn=='default' and pt=='group':
         tqtype='stags'
+        pflavor='udg'
     else:
         tqtype='tagname'
     tqtype='tagname'
     #BUG using currentuser right now. need to support a notion of useras
-    return render_template('postablefilter.html', p=p, querystring=querystring, tqtype=tqtype, useras=g.currentuser, owner=owner)
+    return render_template('postablefilter.html', p=p, pflavor=pflavor, querystring=querystring, tqtype=tqtype, useras=g.currentuser, owner=owner)
 # @adsgut.route('/library/<libraryowner>/library:<libraryname>/items')
 # def libraryItems(libraryowner, libraryname):
 #     library=postable(libraryowner, libraryname, "library")
@@ -704,6 +708,9 @@ def itemsForPostable(pns, ptype, pname):
     else:
         query=dict(request.args)
         useras, usernick=_userget(g, query)
+        #BUG find a way of having the usernick in this context be from elsewhere
+        #the elsewhere would come from postings and taggings, and confine to this group
+        #perhaps all the query funcs would need some re-org
         print "QQQ",query, request.args
         #need to pop the other things like pagetuples etc. Helper funcs needed
         sort = _sortget(query)

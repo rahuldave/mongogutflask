@@ -30,7 +30,8 @@ $ ->
   {% if owner %}
   view=new views.InviteUser(model, {withcb:true})
   $('div#invitedform').append(view.render().$el)
-  view=new views.AddGroup(model, ['a','b'],{withcb:true} )
+
+  view=new views.AddGroup(model, ['rahuldave/group:ml','jayluker:/group:sp'],{withcb:true} )
   $('div#invitedform').append(view.render().$el)
   $('div#invitedform').show()
   $.get "/library/{{ thelibrary.basic.fqin}}/inviteds", (data) ->

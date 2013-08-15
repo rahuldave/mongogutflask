@@ -15,7 +15,8 @@ regular_list = h.renderable (items) ->
 
 table_from_dict_partial = h.renderable (k,v) ->
     h.td k
-    h.td v
+    h.td ->
+        h.raw v
 
 table_from_dict = h.renderable (kcol, vcol, dict) ->
     h.table '.table.table-bordered.table-condensed.table-striped',  ->
@@ -76,7 +77,7 @@ one_submit = h.renderable (ltext, btext) ->
     h.label ltext
     h.form ".form-inline", ->
         h.input ".span3", type: 'text'
-        h.button ".btn", type: 'button', btext
+        h.button ".btn.btn-primary", type: 'button', btext
 
 one_submit_with_cb = h.renderable (ltext, btext, ctext) ->
     h.label ltext
@@ -85,7 +86,7 @@ one_submit_with_cb = h.renderable (ltext, btext, ctext) ->
         h.label '.checkbox', ->
             h.input type: 'checkbox'
             h.text ctext
-        h.button ".btn", type: 'button', btext
+        h.button ".btn.btn-primary", type: 'button', btext
 
 dropdown_submit = h.renderable (selects, ltext, btext) ->
     h.label ltext
@@ -104,16 +105,86 @@ dropdown_submit_with_cb = h.renderable (selects, ltext, btext, ctext) ->
         h.label '.checkbox', ->
             h.input type: 'checkbox'
             h.text ctext
-        h.button ".btn", type: 'button', btext
+        h.button ".btn.btn-primary", type: 'button', btext
 
 info_layout = h.renderable (dict, keysdict) ->
   h.dl '.dl-horizontal', ->
     for k of keysdict
         h.dt keysdict[k]
         h.dd dict[k]
-    
+
+#<button class="btn btn-small" type="button">Small button</button> 
+yes_button = h.renderable (btext) ->
+    h.button '.btn.btn-mini.btn-primary', type:'button', btext
+
+# <div class=\"control-group\">
+#   <label class=\"control-label\">Add Note</label>
+#   <input type=\"text\" class=\"controls input-xxlarge\" placeholder=\"Type a note…\">
+#   <label class=\"checkbox control-label\">
+#     <input type=\"checkbox\" class=\"controls\"> Make Private
+#   </label>
+# </div>
+
+postalnote_form = h.renderable () ->
+    h.div ".control-group.postalnote", ->
+        h.textarea ".controls.input-xlarge", type:"text", rows:'2', placeholder:"Type a note"
+        h.label ".checkbox.control-label", ->
+            h.input ".controls", type:'checkbox'
+            h.text "Make note Private"
+
+#     <legend>Tagging and Posting</legend>
+#     {% if nameable %}
+#       <div class="control-group">
+#         <label class="control-label">Name this {{itemtype}}</label>
+#         <input class="controls" type="text" placeholder="Name for {{itemtype}}…">
+#       </div>
+#     {% endif %}
+#     <div class="control-group">
+#       <label class="checkbox control-label">
+#         <input class="controls" type="checkbox"> Make Public
+#       </label>
+#     </div>
+#     <div class="control-group">
+#       <label id="libslabel" class="control-label">Libraries</label>
+#       <input class="controls" type="text" placeholder="Library Name…">
+#     </div>
+#     <div class="control-group">
+#       <label id="groupslabel" class="control-label">Groups</label>
+#       <input class="controls" type="text" placeholder="Group Name…">
+#     </div>
+#     <div class="control-group">
+#       <label class="control-label">Tags</label>
+#       <input class="controls" type="text" placeholder="Tag Name…">
+#     </div>
+#     <button type="submit" class="btn">Submit</button>
+
+
+postalall_form = h.renderable (nameable, itemtype) ->
+    h.legend "Tagging and Posting"
+    if nameable
+        h.div ".control-group", ->
+            h.label ".control-label", "Name this #{itemtype}"
+            h.input ".controls", type:text, placeholder:"Name for #{itemtype}"
+    h.div ".control-group", ->
+        h.label ".checkbox.control-label", ->
+            h.input ".controls.makepublic", type:"checkbox"
+            h.text "Make Public"
+    h.div ".control-group", ->
+        h.label ".control-label", "Libraries"
+        h.input ".controls.librariesinput.input-xxlarge", type:"text", placeholder:"Lib names, comma separated" 
+    h.div ".control-group", ->
+        h.label ".control-label", "Groups"
+        h.input ".controls.groupsinput.input-xxlarge", type:"text", placeholder:"Grp names, comma separated"
+    h.div ".control-group", ->
+        h.label ".control-label", "Tags"
+        h.input ".controls.tagsinput.input-xxlarge", type:"text", placeholder:"Tag names, comma separated"
+    h.button ".btn.btn-primary", type:'button', "Save"
+
 
 root.widgets = 
+    postalall_form: postalall_form
+    postalnote_form: postalnote_form
+    yes_button: yes_button
     inline_list: inline_list
     regular_list: regular_list
     info_layout: info_layout
