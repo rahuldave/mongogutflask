@@ -406,6 +406,38 @@ def createLibrary():
     else:
         doabort("BAD_REQ", "GET not supported")
 
+@adsgut.route('/postable/<powner>/<ptype>:<pname>/doinvitation', methods=['POST'])#user/op
+def doInviteToPostable(powner, ptype, pname):
+    #add permit to match user with groupowner
+    fqpn=powner+"/"+ptype+":"+pname
+    if request.method == 'POST':
+        #specify your own nick for accept or decline
+        print "LALALALALLA", request.json
+        jsonpost=dict(request.json)
+        nick=_dictp('userthere', jsonpost)
+        #for inviting this is nick of user invited. 
+        #for accepting this is your own nick
+        if not nick:
+            doabort("BAD_REQ", "No User Specified")
+        op=_dictp('op', jsonpost)
+        print "NICKOP", nick, op
+        if not op:
+            doabort("BAD_REQ", "No Op Specified")
+        if op=="invite":
+            utba, p=g.db.inviteUserToPostableUsingNick(g.currentuser, fqpn, nick)
+            return jsonify({'status':'OK', 'info': {'invited':utba.nick, 'to':fqpn}})
+        elif op=='accept':
+            me, p=g.db.acceptInviteToPostable(g.currentuser, fqpn, nick)
+            return jsonify({'status':'OK', 'info': {'invited':me.nick, 'to': fqpn, 'accepted':True}})
+        elif op=='decline':
+            #BUG add something to invitations to mark declines.
+            return jsonify({'status': 'OK', 'info': {'invited':nick, 'to': fqpn, 'accepted':False}})
+        else:
+            doabort("BAD_REQ", "No Op Specified")
+    else:
+        doabort("BAD_REQ", "GET not supported")
+
+
 @adsgut.route('/group/<groupowner>/group:<groupname>/doinvitation', methods=['POST'])#user/op
 def doInviteToGroup(groupowner, groupname):
     #add permit to match user with groupowner

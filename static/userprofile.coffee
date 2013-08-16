@@ -1,7 +1,7 @@
 #we'll start with user profile funcs
 root = exports ? this
 $=jQuery
-console.log "In Funcs"
+console.log "In Funcs", syncs
 h = teacup
 w = widgets
 
@@ -32,6 +32,8 @@ class PostableView extends Backbone.View
 
     tagName: "tr"
        
+    events:
+        "click .yesbtn" : "clickedYes"
     render: =>
 
         if @model.get('invite')
@@ -40,6 +42,18 @@ class PostableView extends Backbone.View
             content=w.one_col_table_partial(@model.get('fqpn'))
             @$el.html(content)
         return this
+
+    clickedYes: =>
+        loc=window.location
+        cback = (data) ->
+            console.log "return data", data, loc
+            window.location=location
+        eback = (xhr, etext) ->
+            console.log "ERROR", etext, loc
+            #replace by a div alert from bootstrap
+            alert 'Did not succeed'
+        console.log("GGG",@model, @$el)
+        syncs.accept_invitation(@model.get('nick'), @model.get('fqpn'), cback, eback)
 
 
 
@@ -50,6 +64,7 @@ class PostableList extends Backbone.Collection
     initialize: (models, options) ->
         @listtype=options.listtype
         @invite=options.invite
+        @nick=options.nick
 
 #BUG: do we not need to destroy when we move things around?
 #also invite isnt enough to have the event based interplay between 2 lists

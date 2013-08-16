@@ -115,7 +115,7 @@ info_layout = h.renderable (dict, keysdict) ->
 
 #<button class="btn btn-small" type="button">Small button</button> 
 yes_button = h.renderable (btext) ->
-    h.button '.btn.btn-mini.btn-primary', type:'button', btext
+    h.button '.btn.btn-mini.btn-primary.yesbtn', type:'button', btext
 
 # <div class=\"control-group\">
 #   <label class=\"control-label\">Add Note</label>

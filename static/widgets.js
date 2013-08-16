@@ -214,7 +214,7 @@
   });
 
   yes_button = h.renderable(function(btext) {
-    return h.button('.btn.btn-mini.btn-primary', {
+    return h.button('.btn.btn-mini.btn-primary.yesbtn', {
       type: 'button'
     }, btext);
   });

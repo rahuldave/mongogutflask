@@ -9,7 +9,7 @@
 
   $ = jQuery;
 
-  console.log("In Funcs");
+  console.log("In Funcs", syncs);
 
   h = teacup;
 
@@ -116,6 +116,9 @@
 
     function PostableView() {
       var _this = this;
+      this.clickedYes = function() {
+        return PostableView.prototype.clickedYes.apply(_this, arguments);
+      };
       this.render = function() {
         return PostableView.prototype.render.apply(_this, arguments);
       };
@@ -123,6 +126,10 @@
     }
 
     PostableView.prototype.tagName = "tr";
+
+    PostableView.prototype.events = {
+      "click .yesbtn": "clickedYes"
+    };
 
     PostableView.prototype.render = function() {
       var content;
@@ -133,6 +140,21 @@
         this.$el.html(content);
       }
       return this;
+    };
+
+    PostableView.prototype.clickedYes = function() {
+      var cback, eback, loc;
+      loc = window.location;
+      cback = function(data) {
+        console.log("return data", data, loc);
+        return window.location = location;
+      };
+      eback = function(xhr, etext) {
+        console.log("ERROR", etext, loc);
+        return alert('Did not succeed');
+      };
+      console.log("GGG", this.model, this.$el);
+      return syncs.accept_invitation(this.model.get('nick'), this.model.get('fqpn'), cback, eback);
     };
 
     return PostableView;
@@ -151,7 +173,8 @@
 
     PostableList.prototype.initialize = function(models, options) {
       this.listtype = options.listtype;
-      return this.invite = options.invite;
+      this.invite = options.invite;
+      return this.nick = options.nick;
     };
 
     return PostableList;
