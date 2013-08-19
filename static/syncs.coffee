@@ -53,8 +53,44 @@ accept_invitation = (nick, fqpn, cback, eback) ->
 
     xhr=doajax(params)
 
+invite_user = (nick, postable, changerw, cback, eback) ->
+    console.log "in invite user", nick, postable, changerw
+    url= "/postable/"+postable+"/doinvitation"
+    data=
+        userthere:nick
+        op:'invite'
+        changerw:changerw
+    params=
+        type:'POST'
+        dataType:'json'
+        url:url
+        data:JSON.stringify(data)
+        contentType: "application/json"
+        success:cback
+        error:eback
+    xhr=doajax(params)
+
+add_group = (selectedgrp, postable, changerw, cback, eback) ->
+    console.log "SG", selectedgrp
+    url= "/postable/"+postable+"/members"
+    data=
+        member:selectedgrp
+        changerw:changerw
+    params=
+        type:'POST'
+        dataType:'json'
+        url:url
+        data:JSON.stringify(data)
+        contentType: "application/json"
+        success:cback
+        error:eback
+    console.log data
+    xhr=doajax(params)
+
 root.syncs=
-    accept_invitation:accept_invitation
+    accept_invitation: accept_invitation
+    invite_user: invite_user
+    add_group: add_group
 
 
 

@@ -415,6 +415,9 @@ def doInviteToPostable(powner, ptype, pname):
         print "LALALALALLA", request.json
         jsonpost=dict(request.json)
         nick=_dictp('userthere', jsonpost)
+        changerw=_dictp('changerw', jsonpost)
+        if changerw==None:
+            changerw=False
         #for inviting this is nick of user invited. 
         #for accepting this is your own nick
         if not nick:
@@ -424,10 +427,10 @@ def doInviteToPostable(powner, ptype, pname):
         if not op:
             doabort("BAD_REQ", "No Op Specified")
         if op=="invite":
-            utba, p=g.db.inviteUserToPostableUsingNick(g.currentuser, fqpn, nick)
+            utba, p=g.db.inviteUserToPostableUsingNick(g.currentuser, fqpn, nick, changerw)
             return jsonify({'status':'OK', 'info': {'invited':utba.nick, 'to':fqpn}})
         elif op=='accept':
-            me, p=g.db.acceptInviteToPostable(g.currentuser, fqpn, nick)
+            me, p=g.db.acceptInviteToPostableUsingNick(g.currentuser, fqpn, nick)
             return jsonify({'status':'OK', 'info': {'invited':me.nick, 'to': fqpn, 'accepted':True}})
         elif op=='decline':
             #BUG add something to invitations to mark declines.
@@ -438,6 +441,7 @@ def doInviteToPostable(powner, ptype, pname):
         doabort("BAD_REQ", "GET not supported")
 
 
+#DEPRECATED: REMOVE
 @adsgut.route('/group/<groupowner>/group:<groupname>/doinvitation', methods=['POST'])#user/op
 def doInviteToGroup(groupowner, groupname):
     #add permit to match user with groupowner
@@ -478,8 +482,8 @@ def addMemberToPostable(g, request, fqpn):
     changerw=_dictp('changerw', jsonpost)
     if not changerw:
         changerw=False
-    if not nick:
-        doabort("BAD_REQ", "No User Specified")
+    # if not g.currentuser.nick:
+    #     doabort("BAD_REQ", "No User Specified")
     user, postable=g.db.addMemberableToPostable(g.currentuser, g.currentuser, fqpn, fqmn, changerw)
     return user, postable
 
@@ -530,6 +534,7 @@ def addMemberToApp_or_appMembers(appowner, appname):
         return jsonify(userdict)
 
 
+#deprecare library for postable
 @adsgut.route('/library/<libraryowner>/library:<libraryname>/members', methods=['GET', 'POST'])#user
 def addMemberToLibrary_or_libraryMembers(libraryowner, libraryname):
     #add permit to match user with groupowner
@@ -539,6 +544,16 @@ def addMemberToLibrary_or_libraryMembers(libraryowner, libraryname):
         return jsonify({'status':'OK', 'info': {'member':member.basic.fqin, 'type':'library', 'postable':library.basic.fqin}})
     else:
         userdict=getMembersOfPostable(g, request, fqln)
+        return jsonify(userdict)
+
+@adsgut.route('/postable/<powner>/<ptype>:<pname>/members', methods=['GET', 'POST'])#user
+def addMemberToPostable_or_postableMembers(powner, ptype, pname):
+    fqpn=powner+"/"+ptype+":"+pname
+    if request.method == 'POST':
+        member, postable=addMemberToPostable(g, request, fqpn)
+        return jsonify({'status':'OK', 'info': {'member':member.basic.fqin, 'type':ptype, 'postable':postable.basic.fqin}})
+    else:
+        userdict=getMembersOfPostable(g, request, fqpn)
         return jsonify(userdict)
 
 #######################################################################################################################

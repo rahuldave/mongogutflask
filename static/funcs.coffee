@@ -148,30 +148,81 @@ postable_info = (data, template) ->
 class InviteUser extends Backbone.View
 
   tagName: 'div'
+
+  events:
+    "click .sub" : "inviteUserEH"
+
   initialize: (model, options) ->
-    {withcb} = options ? {withcb:false}
-    if withcb
+    {@withcb, @postable} = options
+    if @withcb
       @content=widgets.one_submit_with_cb("Invite a user using their email:", "Invite", "Can Post?")
     else
       @content=widgets.one_submit("Invite a user using their email:", "Invite")
 
   render: () =>
-    this.$el.html(@content)
+    @$el.html(@content)
     return this
+
+  inviteUserEH: =>
+    loc=window.location
+    cback = (data) ->
+            console.log "return data", data, loc
+            window.location=location
+    eback = (xhr, etext) ->
+        console.log "ERROR", etext, loc
+        #replace by a div alert from bootstrap
+        alert "Did not succeed: #{etext}"
+    console.log("GGG",@$el)
+    #default for groups
+    changerw=false
+    if @withcb
+      rwmode=@$('.cb').is(':checked')
+      if rwmode
+        changerw=true
+      else
+        changerw=false
+    usernick=@$('.txt').val()
+    syncs.invite_user(usernick, @postable, changerw, cback, eback)
 
 class AddGroup extends Backbone.View
 
   tagName: 'div'
-  initialize: (model, groups, options) ->
-    {withcb} = options ? {withcb:false}
-    if withcb
-      @content=widgets.dropdown_submit_with_cb(groups,"Add a group you are a member of:","Add", "Can Post?")
+
+  events:
+    "click .sub" : "addGroupEH"
+
+  initialize: (model, options) ->
+    {@withcb, @postable, @groups} = options
+    if @withcb
+      @content=widgets.dropdown_submit_with_cb(@groups,"Add a group you are a member of:","Add", "Can Post?")
     else
-      @content=widgets.dropdown_submit(groups,"Add a group you are a member of:","Add")
+      @content=widgets.dropdown_submit(@groups,"Add a group you are a member of:","Add")
 
   render: () =>
-    this.$el.html(@content)
+    @$el.html(@content)
     return this
+
+  addGroupEH: =>
+    loc=window.location
+    cback = (data) ->
+            console.log "return data", data, loc
+            window.location=location
+    eback = (xhr, etext) ->
+        console.log "ERROR", etext, loc
+        #replace by a div alert from bootstrap
+        alert "Did not succeed: #{etext}"
+    console.log("GGG",@$el)
+    #default for groups
+    changerw=false
+    if @withcb
+      rwmode=@$('.cb').is(':checked')
+      if rwmode
+        changerw=true
+      else
+        changerw=false
+    groupchosen=@$('.sel').val()
+    console.log("GC", groupchosen)
+    syncs.add_group(groupchosen, @postable, changerw, cback, eback)
 
 
 root.get_tags = get_tags

@@ -280,6 +280,9 @@
 
     function InviteUser() {
       var _this = this;
+      this.inviteUserEH = function() {
+        return InviteUser.prototype.inviteUserEH.apply(_this, arguments);
+      };
       this.render = function() {
         return InviteUser.prototype.render.apply(_this, arguments);
       };
@@ -288,12 +291,13 @@
 
     InviteUser.prototype.tagName = 'div';
 
+    InviteUser.prototype.events = {
+      "click .sub": "inviteUserEH"
+    };
+
     InviteUser.prototype.initialize = function(model, options) {
-      var withcb;
-      withcb = (options != null ? options : {
-        withcb: false
-      }).withcb;
-      if (withcb) {
+      this.withcb = options.withcb, this.postable = options.postable;
+      if (this.withcb) {
         return this.content = widgets.one_submit_with_cb("Invite a user using their email:", "Invite", "Can Post?");
       } else {
         return this.content = widgets.one_submit("Invite a user using their email:", "Invite");
@@ -303,6 +307,31 @@
     InviteUser.prototype.render = function() {
       this.$el.html(this.content);
       return this;
+    };
+
+    InviteUser.prototype.inviteUserEH = function() {
+      var cback, changerw, eback, loc, rwmode, usernick;
+      loc = window.location;
+      cback = function(data) {
+        console.log("return data", data, loc);
+        return window.location = location;
+      };
+      eback = function(xhr, etext) {
+        console.log("ERROR", etext, loc);
+        return alert("Did not succeed: " + etext);
+      };
+      console.log("GGG", this.$el);
+      changerw = false;
+      if (this.withcb) {
+        rwmode = this.$('.cb').is(':checked');
+        if (rwmode) {
+          changerw = true;
+        } else {
+          changerw = false;
+        }
+      }
+      usernick = this.$('.txt').val();
+      return syncs.invite_user(usernick, this.postable, changerw, cback, eback);
     };
 
     return InviteUser;
@@ -315,6 +344,9 @@
 
     function AddGroup() {
       var _this = this;
+      this.addGroupEH = function() {
+        return AddGroup.prototype.addGroupEH.apply(_this, arguments);
+      };
       this.render = function() {
         return AddGroup.prototype.render.apply(_this, arguments);
       };
@@ -323,21 +355,48 @@
 
     AddGroup.prototype.tagName = 'div';
 
-    AddGroup.prototype.initialize = function(model, groups, options) {
-      var withcb;
-      withcb = (options != null ? options : {
-        withcb: false
-      }).withcb;
-      if (withcb) {
-        return this.content = widgets.dropdown_submit_with_cb(groups, "Add a group you are a member of:", "Add", "Can Post?");
+    AddGroup.prototype.events = {
+      "click .sub": "addGroupEH"
+    };
+
+    AddGroup.prototype.initialize = function(model, options) {
+      this.withcb = options.withcb, this.postable = options.postable, this.groups = options.groups;
+      if (this.withcb) {
+        return this.content = widgets.dropdown_submit_with_cb(this.groups, "Add a group you are a member of:", "Add", "Can Post?");
       } else {
-        return this.content = widgets.dropdown_submit(groups, "Add a group you are a member of:", "Add");
+        return this.content = widgets.dropdown_submit(this.groups, "Add a group you are a member of:", "Add");
       }
     };
 
     AddGroup.prototype.render = function() {
       this.$el.html(this.content);
       return this;
+    };
+
+    AddGroup.prototype.addGroupEH = function() {
+      var cback, changerw, eback, groupchosen, loc, rwmode;
+      loc = window.location;
+      cback = function(data) {
+        console.log("return data", data, loc);
+        return window.location = location;
+      };
+      eback = function(xhr, etext) {
+        console.log("ERROR", etext, loc);
+        return alert("Did not succeed: " + etext);
+      };
+      console.log("GGG", this.$el);
+      changerw = false;
+      if (this.withcb) {
+        rwmode = this.$('.cb').is(':checked');
+        if (rwmode) {
+          changerw = true;
+        } else {
+          changerw = false;
+        }
+      }
+      groupchosen = this.$('.sel').val();
+      console.log("GC", groupchosen);
+      return syncs.add_group(groupchosen, this.postable, changerw, cback, eback);
     };
 
     return AddGroup;

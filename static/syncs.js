@@ -34,7 +34,7 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
 
 
 (function() {
-  var $, accept_invitation, doajax, h, root;
+  var $, accept_invitation, add_group, doajax, h, invite_user, root;
 
   root = typeof exports !== "undefined" && exports !== null ? exports : this;
 
@@ -65,8 +65,52 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
     return xhr = doajax(params);
   };
 
+  invite_user = function(nick, postable, changerw, cback, eback) {
+    var data, params, url, xhr;
+    console.log("in invite user", nick, postable, changerw);
+    url = "/postable/" + postable + "/doinvitation";
+    data = {
+      userthere: nick,
+      op: 'invite',
+      changerw: changerw
+    };
+    params = {
+      type: 'POST',
+      dataType: 'json',
+      url: url,
+      data: JSON.stringify(data),
+      contentType: "application/json",
+      success: cback,
+      error: eback
+    };
+    return xhr = doajax(params);
+  };
+
+  add_group = function(selectedgrp, postable, changerw, cback, eback) {
+    var data, params, url, xhr;
+    console.log("SG", selectedgrp);
+    url = "/postable/" + postable + "/members";
+    data = {
+      member: selectedgrp,
+      changerw: changerw
+    };
+    params = {
+      type: 'POST',
+      dataType: 'json',
+      url: url,
+      data: JSON.stringify(data),
+      contentType: "application/json",
+      success: cback,
+      error: eback
+    };
+    console.log(data);
+    return xhr = doajax(params);
+  };
+
   root.syncs = {
-    accept_invitation: accept_invitation
+    accept_invitation: accept_invitation,
+    invite_user: invite_user,
+    add_group: add_group
   };
 
 }).call(this);

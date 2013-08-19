@@ -28,10 +28,10 @@ $ ->
     $('div#members').append(content)
     $('div#members').show()
   {% if owner %}
-  view=new views.InviteUser(model, {withcb:true})
+  view=new views.InviteUser(model, {postable: "{{ thelibrary.basic.fqin}}", withcb:true})
   $('div#invitedform').append(view.render().$el)
 
-  view=new views.AddGroup(model, ['rahuldave/group:ml','jayluker:/group:sp'],{withcb:true} )
+  view=new views.AddGroup(model, {postable: "{{ thelibrary.basic.fqin}}", groups:['rahuldave/group:ml','jayluker:/group:sp'], withcb:true} )
   $('div#invitedform').append(view.render().$el)
   $('div#invitedform').show()
   $.get "/library/{{ thelibrary.basic.fqin}}/inviteds", (data) ->

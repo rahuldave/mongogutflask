@@ -28,7 +28,7 @@ $ ->
     $('div#members').append(content)
     $('div#members').show()
   {% if owner %}
-  view=new views.InviteUser(model)
+  view=new views.InviteUser(model, {postable: "{{ thegroup.basic.fqin}}", withcb:false})
   $('div#invitedform').append(view.render().$el)
   $('div#invitedform').show()
   $.get "/group/{{ thegroup.basic.fqin}}/inviteds", (data) ->

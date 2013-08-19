@@ -76,36 +76,36 @@ $one_col_table = (kcol, vlist) ->
 one_submit = h.renderable (ltext, btext) ->
     h.label ltext
     h.form ".form-inline", ->
-        h.input ".span3", type: 'text'
-        h.button ".btn.btn-primary", type: 'button', btext
+        h.input ".span3.txt", type: 'text'
+        h.button ".btn.btn-primary.sub", type: 'button', btext
 
 one_submit_with_cb = h.renderable (ltext, btext, ctext) ->
     h.label ltext
     h.form ".form-inline", ->
-        h.input ".span3", type: 'text'
+        h.input ".span3.txt", type: 'text'
         h.label '.checkbox', ->
-            h.input type: 'checkbox'
+            h.input ".cb", type: 'checkbox'
             h.text ctext
-        h.button ".btn.btn-primary", type: 'button', btext
+        h.button ".btn.btn-primary.sub", type: 'button', btext
 
 dropdown_submit = h.renderable (selects, ltext, btext) ->
     h.label ltext
     h.form '##{wname}.form-inline', ->
-        h.select ->
+        h.select ".sel", ->
             for s in selects
                 h.option s
-        h.button ".btn", type: 'button', btext
+        h.button ".btn.btn-primary.sub", type: 'button', btext
 
 dropdown_submit_with_cb = h.renderable (selects, ltext, btext, ctext) ->
     h.label ltext
     h.form '.form-inline', ->
-        h.select ->
+        h.select ".sel", ->
             for s in selects
                 h.option s
         h.label '.checkbox', ->
-            h.input type: 'checkbox'
+            h.input ".cb", type: 'checkbox'
             h.text ctext
-        h.button ".btn.btn-primary", type: 'button', btext
+        h.button ".btn.btn-primary.sub", type: 'button', btext
 
 info_layout = h.renderable (dict, keysdict) ->
   h.dl '.dl-horizontal', ->

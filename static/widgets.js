@@ -132,10 +132,10 @@
   one_submit = h.renderable(function(ltext, btext) {
     h.label(ltext);
     return h.form(".form-inline", function() {
-      h.input(".span3", {
+      h.input(".span3.txt", {
         type: 'text'
       });
-      return h.button(".btn.btn-primary", {
+      return h.button(".btn.btn-primary.sub", {
         type: 'button'
       }, btext);
     });
@@ -144,16 +144,16 @@
   one_submit_with_cb = h.renderable(function(ltext, btext, ctext) {
     h.label(ltext);
     return h.form(".form-inline", function() {
-      h.input(".span3", {
+      h.input(".span3.txt", {
         type: 'text'
       });
       h.label('.checkbox', function() {
-        h.input({
+        h.input(".cb", {
           type: 'checkbox'
         });
         return h.text(ctext);
       });
-      return h.button(".btn.btn-primary", {
+      return h.button(".btn.btn-primary.sub", {
         type: 'button'
       }, btext);
     });
@@ -162,7 +162,7 @@
   dropdown_submit = h.renderable(function(selects, ltext, btext) {
     h.label(ltext);
     return h.form('##{wname}.form-inline', function() {
-      h.select(function() {
+      h.select(".sel", function() {
         var s, _i, _len, _results;
         _results = [];
         for (_i = 0, _len = selects.length; _i < _len; _i++) {
@@ -171,7 +171,7 @@
         }
         return _results;
       });
-      return h.button(".btn", {
+      return h.button(".btn.btn-primary.sub", {
         type: 'button'
       }, btext);
     });
@@ -180,7 +180,7 @@
   dropdown_submit_with_cb = h.renderable(function(selects, ltext, btext, ctext) {
     h.label(ltext);
     return h.form('.form-inline', function() {
-      h.select(function() {
+      h.select(".sel", function() {
         var s, _i, _len, _results;
         _results = [];
         for (_i = 0, _len = selects.length; _i < _len; _i++) {
@@ -190,12 +190,12 @@
         return _results;
       });
       h.label('.checkbox', function() {
-        h.input({
+        h.input(".cb", {
           type: 'checkbox'
         });
         return h.text(ctext);
       });
-      return h.button(".btn.btn-primary", {
+      return h.button(".btn.btn-primary.sub", {
         type: 'button'
       }, btext);
     });
