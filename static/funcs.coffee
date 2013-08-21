@@ -102,21 +102,42 @@ add_libs_and_groups = ($libsel, $groupsel, nick) ->
   $.get "/user/#{nick}/librariesuserisin", (data) ->
     $libsel.append("<span> (in #{data.libraries.join(',')})</span>")
 
-postable_members_template = renderable (users, owner) ->
-  if owner is 'True'
-    w.table_from_dict("User", "Can User Write", users)
-  else
+
+
+# #BUG: make backbone views for all of this
+# postable_members_template = renderable (fqpn, users, owner, scmode=false) ->
+#   if owner is 'True'
+#     if scmode
+#       userlist= (k for k,v of users)
+#       w.one_col_table "Users", userlist
+#     else
+#       #w.table_from_dict("User", "Can User Write", users)
+#       # v=PostableMembersView({$e_el:$e, fqpn:fqpn, users:users})
+#       # return v.render()
+#       views=(new RWToggleView({rwmode:users[u], fqpn:fqpn, memberable:u}) for u of users)
+#       rendered = (v.render().el for v in views)
+#       console.log "RENDER1", rendered
+#       console.log "RENDER2"
+#       $widget=w.$one_col_table("User", rendered)
+#   else
+#     userlist= (k for k,v of users)
+#     w.inline_list userlist
+
+postable_inviteds_template = renderable (fqpn, users, scmode=false) ->
+  if scmode
     userlist= (k for k,v of users)
-    w.inline_list userlist
+    w.one_col_table "Users", userlist
+  else
+    w.table_from_dict("User", "Can User Write", users)
 
-postable_inviteds_template = renderable (users) ->
-  w.table_from_dict("User", "Can User Write", users)
+# #Bug: these need to become collection Views
+# postable_members = (fqpn, owner, data, template, scmode=false) ->
+#   template(fqpn, data.users, owner, scmode)
 
-postable_members = (owner, data, template) ->
-  template(data.users, owner)
+postable_inviteds = (fqpn, data, template, scmode=false) ->
+  template(fqpn, data.users, scmode)
 
-postable_inviteds = (data, template) ->
-  template(data.users)
+
 
 postable_info_layout = renderable ({basic, owner}) ->
   dl '.dl-horizontal', ->
@@ -152,7 +173,7 @@ class InviteUser extends Backbone.View
   events:
     "click .sub" : "inviteUserEH"
 
-  initialize: (model, options) ->
+  initialize: (options) ->
     {@withcb, @postable} = options
     if @withcb
       @content=widgets.one_submit_with_cb("Invite a user using their email:", "Invite", "Can Post?")
@@ -182,7 +203,7 @@ class InviteUser extends Backbone.View
       else
         changerw=false
     usernick=@$('.txt').val()
-    syncs.invite_user(usernick, @postable, changerw, cback, eback)
+    syncs.invite_user("adsgut/user:#{usernick}", @postable, changerw, cback, eback)
 
 class AddGroup extends Backbone.View
 
@@ -191,7 +212,7 @@ class AddGroup extends Backbone.View
   events:
     "click .sub" : "addGroupEH"
 
-  initialize: (model, options) ->
+  initialize: (options) ->
     {@withcb, @postable, @groups} = options
     if @withcb
       @content=widgets.dropdown_submit_with_cb(@groups,"Add a group you are a member of:","Add", "Can Post?")
@@ -233,12 +254,10 @@ root.add_libs_and_groups= add_libs_and_groups
 root.views = 
   library_info: postable_info
   group_info: postable_info
-  postable_members: postable_members
   postable_inviteds: postable_inviteds
   InviteUser: InviteUser
   AddGroup: AddGroup
 root.templates =
   library_info: library_info_template
   group_info: group_info_template
-  postable_members: postable_members_template
   postable_inviteds: postable_inviteds_template

@@ -24,19 +24,25 @@ $ ->
     $('div#info').append(content)
     $('div#info').show()
   $.get "/library/{{ thelibrary.basic.fqin}}/members", (data) ->
-    content=views.postable_members "{{owner}}", data, templates.postable_members
-    $('div#members').append(content)
+    plinv=new libraryprofile.PostableListView(users:data.users, fqpn:'{{ thelibrary.basic.fqin}}', owner:'{{owner}}', $e_el:$('div#members'))
+    #console.log "hi"
+    #content=views.postable_members "{{thelibrary.basic.fqin}}", "{{owner}}", data, templates.postable_members, false
+    #console.log "fi"
+    #$('div#members').append(content)
     $('div#members').show()
+    plinv.render()
+
   {% if owner %}
-  view=new views.InviteUser(model, {postable: "{{ thelibrary.basic.fqin}}", withcb:true})
+  view=new views.InviteUser({postable: "{{ thelibrary.basic.fqin}}", withcb:true})
   $('div#invitedform').append(view.render().$el)
 
-  view=new views.AddGroup(model, {postable: "{{ thelibrary.basic.fqin}}", groups:['rahuldave/group:ml','jayluker:/group:sp'], withcb:true} )
+  view=new views.AddGroup({postable: "{{ thelibrary.basic.fqin}}", groups:['rahuldave/group:ml','jayluker/group:sp'], withcb:true} )
   $('div#invitedform').append(view.render().$el)
   $('div#invitedform').show()
   $.get "/library/{{ thelibrary.basic.fqin}}/inviteds", (data) ->
-    content=views.postable_inviteds data, templates.postable_inviteds
+    content=views.postable_inviteds "{{ thelibrary.basic.fqin}}", data, templates.postable_inviteds, false
     $('div#inviteds').append(content)
     $('div#inviteds').show()
+
   {% endif %}
 {% endblock %}

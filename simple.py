@@ -406,39 +406,47 @@ def createLibrary():
     else:
         doabort("BAD_REQ", "GET not supported")
 
-@adsgut.route('/postable/<powner>/<ptype>:<pname>/doinvitation', methods=['POST'])#user/op
-def doInviteToPostable(powner, ptype, pname):
+@adsgut.route('/postable/<powner>/<ptype>:<pname>/changes', methods=['POST'])#user/op
+def doPostableChanges(powner, ptype, pname):
     #add permit to match user with groupowner
     fqpn=powner+"/"+ptype+":"+pname
     if request.method == 'POST':
         #specify your own nick for accept or decline
         print "LALALALALLA", request.json
         jsonpost=dict(request.json)
-        nick=_dictp('userthere', jsonpost)
+        memberable=_dictp('memberable', jsonpost)
         changerw=_dictp('changerw', jsonpost)
         if changerw==None:
             changerw=False
         #for inviting this is nick of user invited. 
         #for accepting this is your own nick
-        if not nick:
+        if not memberable:
             doabort("BAD_REQ", "No User Specified")
         op=_dictp('op', jsonpost)
-        print "NICKOP", nick, op
+        print "NICKOP", memberable, op
         if not op:
             doabort("BAD_REQ", "No Op Specified")
         if op=="invite":
-            utba, p=g.db.inviteUserToPostableUsingNick(g.currentuser, fqpn, nick, changerw)
+            utba, p=g.db.inviteUserToPostable(g.currentuser, g.currentuser, fqpn, memberable, changerw)
             return jsonify({'status':'OK', 'info': {'invited':utba.nick, 'to':fqpn}})
         elif op=='accept':
-            me, p=g.db.acceptInviteToPostableUsingNick(g.currentuser, fqpn, nick)
+            me, p=g.db.acceptInviteToPostable(g.currentuser, fqpn, memberable)
             return jsonify({'status':'OK', 'info': {'invited':me.nick, 'to': fqpn, 'accepted':True}})
         elif op=='decline':
             #BUG add something to invitations to mark declines.
-            return jsonify({'status': 'OK', 'info': {'invited':nick, 'to': fqpn, 'accepted':False}})
+            return jsonify({'status': 'OK', 'info': {'invited':memberable, 'to': fqpn, 'accepted':False}})
+        elif op=='changeowner':
+            #you must be the current owner
+            newo, p=g.db.changeOwnershipOfPostable(g.currentuser, g.currentuser, fqpn, memberable)
+            return jsonify({'status': 'OK', 'info': {'changedto':memberable, 'for': fqpn}})
+        elif op=='togglerw':
+            mem, p = g.db.toggleRWForMembership(g.currentuser, g.currentuser, fqpn, memberable)
+            return jsonify({'status': 'OK', 'info': {'user':memberable, 'for': fqpn}})
         else:
             doabort("BAD_REQ", "No Op Specified")
     else:
         doabort("BAD_REQ", "GET not supported")
+
 
 
 #DEPRECATED: REMOVE
@@ -463,6 +471,9 @@ def doInviteToGroup(groupowner, groupname):
         elif op=='accept':
             me, p=g.db.acceptInviteToPostable(g.currentuser, fqgn, nick)
             return jsonify({'status':'OK', 'info': {'invited':me.nick, 'to': fqgn, 'accepted':True}})
+        elif op=='decline':
+            #BUG add something to invitations to mark declines.
+            return jsonify({'status': 'OK', 'info': {'invited':nick, 'to': fqgn, 'accepted':False}})
         elif op=='decline':
             #BUG add something to invitations to mark declines.
             return jsonify({'status': 'OK', 'info': {'invited':nick, 'to': fqgn, 'accepted':False}})

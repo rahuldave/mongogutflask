@@ -9,7 +9,7 @@
 
   $ = jQuery;
 
-  console.log("In Funcs", syncs);
+  console.log("In userprofile");
 
   h = teacup;
 
@@ -134,9 +134,10 @@
     PostableView.prototype.render = function() {
       var content;
       if (this.model.get('invite')) {
-        this.$el.html(w.table_from_dict_partial(this.model.get('fqpn'), w.yes_button('Yes')));
+        this.$el.html(w.table_from_dict_partial(this.model.get('fqpn'), w.single_button('Yes')));
       } else {
         content = w.one_col_table_partial(this.model.get('fqpn'));
+        console.log("CONTENT", content);
         this.$el.html(content);
       }
       return this;
@@ -204,8 +205,7 @@
     };
 
     PostableListView.prototype.render = function() {
-      var $widget, m, v, views, _i, _len;
-      console.log("h2", this.collection);
+      var $widget, m, rendered, v, views;
       views = (function() {
         var _i, _len, _ref, _results;
         _ref = this.collection.models;
@@ -218,32 +218,24 @@
         }
         return _results;
       }).call(this);
-      for (_i = 0, _len = views.length; _i < _len; _i++) {
-        v = views[_i];
-        console.log("h3", v.render().el);
-      }
+      rendered = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = views.length; _i < _len; _i++) {
+          v = views[_i];
+          _results.push(v.render().el);
+        }
+        return _results;
+      })();
+      console.log("RENDER1", rendered);
+      console.log("RENDER2");
       if (this.collection.invite) {
-        $widget = w.$table_from_dict("Invitations", "Accept?", (function() {
-          var _j, _len1, _results;
-          _results = [];
-          for (_j = 0, _len1 = views.length; _j < _len1; _j++) {
-            v = views[_j];
-            _results.push(v.render().el);
-          }
-          return _results;
-        })());
+        $widget = w.$table_from_dict("Invitations", "Accept?", rendered);
       } else {
-        $widget = w.$one_col_table(this.tmap[this.collection.listtype], (function() {
-          var _j, _len1, _results;
-          _results = [];
-          for (_j = 0, _len1 = views.length; _j < _len1; _j++) {
-            v = views[_j];
-            _results.push(v.render().el);
-          }
-          return _results;
-        })());
+        $widget = w.$one_col_table(this.tmap[this.collection.listtype], rendered);
       }
-      return this.$el.append($widget);
+      this.$el.append($widget);
+      return this;
     };
 
     return PostableListView;

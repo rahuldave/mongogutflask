@@ -1,7 +1,7 @@
 #we'll start with user profile funcs
 root = exports ? this
 $=jQuery
-console.log "In Funcs", syncs
+console.log "In userprofile"
 h = teacup
 w = widgets
 
@@ -34,12 +34,14 @@ class PostableView extends Backbone.View
        
     events:
         "click .yesbtn" : "clickedYes"
+    
     render: =>
 
         if @model.get('invite')
-            @$el.html(w.table_from_dict_partial(@model.get('fqpn'), w.yes_button('Yes')))
+            @$el.html(w.table_from_dict_partial(@model.get('fqpn'), w.single_button('Yes')))
         else
             content=w.one_col_table_partial(@model.get('fqpn'))
+            console.log "CONTENT", content
             @$el.html(content)
         return this
 
@@ -78,14 +80,16 @@ class PostableListView extends Backbone.View
         @$el=options.$e_el
 
     render: =>
-        console.log "h2", @collection
-        views=(new PostableView(model:m) for m in @collection.models)
-        console.log "h3", v.render().el for v in views
+        views = (new PostableView(model:m) for m in @collection.models)
+        rendered = (v.render().el for v in views)
+        console.log "RENDER1", rendered
+        console.log "RENDER2"
         if @collection.invite
-            $widget=w.$table_from_dict("Invitations", "Accept?", (v.render().el for v in views))
+            $widget=w.$table_from_dict("Invitations", "Accept?", rendered)
         else
-            $widget=w.$one_col_table(@tmap[@collection.listtype], (v.render().el for v in views))
+            $widget=w.$one_col_table(@tmap[@collection.listtype], rendered)
         @$el.append($widget)
+        return this
 
 
 root.userprofile=

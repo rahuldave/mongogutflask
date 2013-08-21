@@ -22,3 +22,8 @@ out = teacup.render ->
 
 out2= teacup.h1 "hello"
 console.log ">>",out,"<<",typeof out, out2, typeof out2
+a=
+    a:1
+    b:2
+
+console.log (u for u of a)

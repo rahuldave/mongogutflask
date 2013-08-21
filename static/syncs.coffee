@@ -35,12 +35,7 @@ console.log "In Funcs"
 h = teacup
 doajax=$.ajax
 
-#data={userthere, op}
-accept_invitation = (nick, fqpn, cback, eback) ->
-    url= "/postable/"+fqpn+"/doinvitation"
-    data=
-        userthere:nick
-        op:'accept'
+send_params = (url, data, cback, eback) ->
     params=
         type:'POST'
         dataType:'json'
@@ -49,48 +44,50 @@ accept_invitation = (nick, fqpn, cback, eback) ->
         contentType: "application/json"
         success:cback
         error:eback
-
-
     xhr=doajax(params)
 
-invite_user = (nick, postable, changerw, cback, eback) ->
-    console.log "in invite user", nick, postable, changerw
-    url= "/postable/"+postable+"/doinvitation"
+change_ownership = (fqmn, fqpn, cback, eback) ->
+    url= "/postable/"+fqpn+"/changes"
     data=
-        userthere:nick
+        memberable:fqmn
+        op:'changeowner'
+    send_params(url, data, cback, eback)
+
+toggle_rw = (fqmn, fqpn, cback, eback) ->
+    url= "/postable/"+fqpn+"/changes"
+    data=
+        memberable:fqmn
+        op:'togglerw'
+    send_params(url, data, cback, eback)
+
+accept_invitation = (fqmn, fqpn, cback, eback) ->
+    url= "/postable/"+fqpn+"/changes"
+    data=
+        memberable:fqmn
+        op:'accept'
+    send_params(url, data, cback, eback)
+
+invite_user = (fqmn, postable, changerw, cback, eback) ->
+    url= "/postable/"+postable+"/changes"
+    data=
+        memberable:fqmn
         op:'invite'
         changerw:changerw
-    params=
-        type:'POST'
-        dataType:'json'
-        url:url
-        data:JSON.stringify(data)
-        contentType: "application/json"
-        success:cback
-        error:eback
-    xhr=doajax(params)
+    send_params(url, data, cback, eback)
 
 add_group = (selectedgrp, postable, changerw, cback, eback) ->
-    console.log "SG", selectedgrp
     url= "/postable/"+postable+"/members"
     data=
         member:selectedgrp
         changerw:changerw
-    params=
-        type:'POST'
-        dataType:'json'
-        url:url
-        data:JSON.stringify(data)
-        contentType: "application/json"
-        success:cback
-        error:eback
-    console.log data
-    xhr=doajax(params)
+    send_params(url, data, cback, eback)
 
 root.syncs=
     accept_invitation: accept_invitation
     invite_user: invite_user
     add_group: add_group
+    change_ownership: change_ownership
+    toggle_rw: toggle_rw
 
 
 

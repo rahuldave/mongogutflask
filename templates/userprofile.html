@@ -44,6 +44,7 @@ $=jQuery
 render_postable = (usernick, plist, $pel, ptype, invite) ->
   plin=new userprofile.PostableList([],listtype:ptype, invite:invite, nick:usernick)
   plin.add((new userprofile.Postable(fqpn:p, invite:plin.invite, nick:plin.nick) for p in plist))
+  console.log "THIS", this
   plinv=new userprofile.PostableListView(collection:plin, $e_el:$pel)
   plinv.render()
 

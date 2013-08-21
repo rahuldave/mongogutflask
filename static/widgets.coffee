@@ -44,6 +44,7 @@ $table_from_dict = (kcol, vcol, vlist) ->
 
 
 one_col_table_partial = h.renderable (k) ->
+    console.log "HTMLOUT",k,h.html
     h.td k
 
 one_col_table = h.renderable (kcol, tlist) ->
@@ -77,15 +78,18 @@ one_submit = h.renderable (ltext, btext) ->
     h.label ltext
     h.form ".form-inline", ->
         h.input ".span3.txt", type: 'text'
+        h.raw "&nbsp;&nbsp;&nbsp;"
         h.button ".btn.btn-primary.sub", type: 'button', btext
 
 one_submit_with_cb = h.renderable (ltext, btext, ctext) ->
     h.label ltext
     h.form ".form-inline", ->
         h.input ".span3.txt", type: 'text'
+        h.raw "&nbsp;&nbsp;"
         h.label '.checkbox', ->
             h.input ".cb", type: 'checkbox'
             h.text ctext
+        h.raw "&nbsp;&nbsp;&nbsp;"
         h.button ".btn.btn-primary.sub", type: 'button', btext
 
 dropdown_submit = h.renderable (selects, ltext, btext) ->
@@ -94,6 +98,7 @@ dropdown_submit = h.renderable (selects, ltext, btext) ->
         h.select ".sel", ->
             for s in selects
                 h.option s
+        h.raw "&nbsp;&nbsp;&nbsp;"
         h.button ".btn.btn-primary.sub", type: 'button', btext
 
 dropdown_submit_with_cb = h.renderable (selects, ltext, btext, ctext) ->
@@ -102,9 +107,11 @@ dropdown_submit_with_cb = h.renderable (selects, ltext, btext, ctext) ->
         h.select ".sel", ->
             for s in selects
                 h.option s
+        h.raw "&nbsp;&nbsp;"
         h.label '.checkbox', ->
             h.input ".cb", type: 'checkbox'
             h.text ctext
+        h.raw "&nbsp;&nbsp;&nbsp;"
         h.button ".btn.btn-primary.sub", type: 'button', btext
 
 info_layout = h.renderable (dict, keysdict) ->
@@ -114,7 +121,12 @@ info_layout = h.renderable (dict, keysdict) ->
         h.dd dict[k]
 
 #<button class="btn btn-small" type="button">Small button</button> 
-yes_button = h.renderable (btext) ->
+single_button = h.renderable (btext) ->
+    h.button '.btn.btn-mini.btn-primary.yesbtn', type:'button', btext
+
+single_button_label = h.renderable (ltext, btext) ->
+    h.text ltext
+    h.raw "&nbsp;&nbsp;"
     h.button '.btn.btn-mini.btn-primary.yesbtn', type:'button', btext
 
 # <div class=\"control-group\">
@@ -184,7 +196,8 @@ postalall_form = h.renderable (nameable, itemtype) ->
 root.widgets = 
     postalall_form: postalall_form
     postalnote_form: postalnote_form
-    yes_button: yes_button
+    single_button: single_button
+    single_button_label: single_button_label
     inline_list: inline_list
     regular_list: regular_list
     info_layout: info_layout

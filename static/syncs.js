@@ -34,7 +34,7 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
 
 
 (function() {
-  var $, accept_invitation, add_group, doajax, h, invite_user, root;
+  var $, accept_invitation, add_group, change_ownership, doajax, h, invite_user, root, send_params, toggle_rw;
 
   root = typeof exports !== "undefined" && exports !== null ? exports : this;
 
@@ -46,13 +46,8 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
 
   doajax = $.ajax;
 
-  accept_invitation = function(nick, fqpn, cback, eback) {
-    var data, params, url, xhr;
-    url = "/postable/" + fqpn + "/doinvitation";
-    data = {
-      userthere: nick,
-      op: 'accept'
-    };
+  send_params = function(url, data, cback, eback) {
+    var params, xhr;
     params = {
       type: 'POST',
       dataType: 'json',
@@ -65,52 +60,63 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
     return xhr = doajax(params);
   };
 
-  invite_user = function(nick, postable, changerw, cback, eback) {
-    var data, params, url, xhr;
-    console.log("in invite user", nick, postable, changerw);
-    url = "/postable/" + postable + "/doinvitation";
+  change_ownership = function(fqmn, fqpn, cback, eback) {
+    var data, url;
+    url = "/postable/" + fqpn + "/changes";
     data = {
-      userthere: nick,
+      memberable: fqmn,
+      op: 'changeowner'
+    };
+    return send_params(url, data, cback, eback);
+  };
+
+  toggle_rw = function(fqmn, fqpn, cback, eback) {
+    var data, url;
+    url = "/postable/" + fqpn + "/changes";
+    data = {
+      memberable: fqmn,
+      op: 'togglerw'
+    };
+    return send_params(url, data, cback, eback);
+  };
+
+  accept_invitation = function(fqmn, fqpn, cback, eback) {
+    var data, url;
+    url = "/postable/" + fqpn + "/changes";
+    data = {
+      memberable: fqmn,
+      op: 'accept'
+    };
+    return send_params(url, data, cback, eback);
+  };
+
+  invite_user = function(fqmn, postable, changerw, cback, eback) {
+    var data, url;
+    url = "/postable/" + postable + "/changes";
+    data = {
+      memberable: fqmn,
       op: 'invite',
       changerw: changerw
     };
-    params = {
-      type: 'POST',
-      dataType: 'json',
-      url: url,
-      data: JSON.stringify(data),
-      contentType: "application/json",
-      success: cback,
-      error: eback
-    };
-    return xhr = doajax(params);
+    return send_params(url, data, cback, eback);
   };
 
   add_group = function(selectedgrp, postable, changerw, cback, eback) {
-    var data, params, url, xhr;
-    console.log("SG", selectedgrp);
+    var data, url;
     url = "/postable/" + postable + "/members";
     data = {
       member: selectedgrp,
       changerw: changerw
     };
-    params = {
-      type: 'POST',
-      dataType: 'json',
-      url: url,
-      data: JSON.stringify(data),
-      contentType: "application/json",
-      success: cback,
-      error: eback
-    };
-    console.log(data);
-    return xhr = doajax(params);
+    return send_params(url, data, cback, eback);
   };
 
   root.syncs = {
     accept_invitation: accept_invitation,
     invite_user: invite_user,
-    add_group: add_group
+    add_group: add_group,
+    change_ownership: change_ownership,
+    toggle_rw: toggle_rw
   };
 
 }).call(this);
