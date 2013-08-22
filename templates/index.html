@@ -1,45 +1,52 @@
 {% extends "layout.html" %}
 {% block body %}
-<a href="javascript:(function(){if(window.myBookmarklet!==undefined){myBookmarklet();}else{document.body.appendChild(document.createElement('script')).src='http://localhost:4000/static/marklet.js';}})();">Marklet</a>
-<h1>Groups</h1>
+
+{% if not useras %}
+  <p> <a href="/login">Login</a> </p>
+{% else %}
+  <p> Your <a href="/user/{{useras.nick}}/profile/html">Profile</a> </p>
+  <p> Your <a href="/postable/{{useras.nick}}/group:default/filter/html">Saved Items</a> </p>
+{% endif %}
+<p> See <a href="/postable/adsgut/group:public/filter/html">Public Items</a> if you like.</p>
+<p>Here is a bookmarklet you can use on your ADS search results page to add things to your libraries and groups</p>
+<a href="javascript:(function(){if(window.myBookmarklet!==undefined){myBookmarklet();}else{document.body.appendChild(document.createElement('script')).src='http://localhost:4000/static/marklet.js';}})();">Save To ADS</a>
+
+<hr/>
+<p> If you are a superuser you will see more below. </p>
+<br/>
+<h5>Groups</h5>
   {% for group in groups %}
     <div>
-      <h3><a href="/group/{{ group.basic.fqin }}/profile/html">{{ group.basic.fqin }}</a></h3>
+      <h5><a href="/group/{{ group.basic.fqin }}/profile/html">{{ group.basic.fqin }}</a></h5>
       {{ group.basic.description|safe }}
     </div>
-  {% else %}
-    <em>Unbelievable.  No groups here so far <a href="/add">Add one</a></em>
   {% endfor %}
 <hr/>
-<h1>Apps</h1>
+<h5>Apps</h5>
   {% for app in apps %}
     <div>
-      <h3><a href="/app/{{ app.basic.fqin }}/profile/html">{{ app.basic.fqin }}</a></h3>
+      <h5><a href="/app/{{ app.basic.fqin }}/profile/html">{{ app.basic.fqin }}</a></h5>
       {{ app.basic.description|safe }}
     </div>
-  {% else %}
-    <em>Unbelievable.  No apps here so far <a href="/add">Add one</a></em>
   {% endfor %}
 <hr/>
 
-<h1>Users</h1>
+<h5>Users</h5>
   {% for user in users %}
     <div>
-      <h3><a href="/user/{{ user.nick }}/profile/html">{{ user.nick }}</a></h3>
+      <h5><a href="/user/{{ user.nick }}/profile/html">{{ user.nick }}</a></h5>
       {{ user.adsid }}
     </div>
-  {% else %}
-    <em>Unbelievable.  No users here so far <a href="/add">Add one</a></em>
   {% endfor %}
+<hr/>
 
-<h1>Libraries</h1>
+<h5>Libraries</h5>
   {% for library in libraries %}
     <div>
-      <h3><a href="/library/{{ library.basic.fqin }}/profile/html">{{ library.basic.fqin }}</a></h3>
+      <h5><a href="/library/{{ library.basic.fqin }}/profile/html">{{ library.basic.fqin }}</a></h5>
       {{ library.basic.description|safe }}
     </div>
-  {% else %}
-    <em>Unbelievable.  No libraries here so far <a href="/add">Add one</a></em>
   {% endfor %}
+
 <hr/>
 {% endblock %}

@@ -144,7 +144,7 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
       ],
       itemtype: itemtype
     };
-    if (note === !"") {
+    if (note !== "") {
       return send_params(url, data, cback, eback);
     }
   };

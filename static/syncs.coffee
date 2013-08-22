@@ -106,7 +106,7 @@ submit_note = (item, note, cback, eback) ->
     data=
         tagspecs:[{content:note, tagtype:tagtype}]
         itemtype:itemtype
-    if note is not ""
+    if note != ""
         send_params(url, data, cback, eback)
 
 submit_tags = (items, tags, cback, eback) ->

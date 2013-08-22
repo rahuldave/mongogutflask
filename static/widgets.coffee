@@ -45,7 +45,8 @@ $table_from_dict = (kcol, vcol, vlist) ->
 
 one_col_table_partial = h.renderable (k) ->
     console.log "HTMLOUT",k,h.html
-    h.td k
+    h.td ->
+        h.raw k
 
 one_col_table = h.renderable (kcol, tlist) ->
     h.table '.table.table-bordered.table-condensed',  ->
@@ -210,6 +211,8 @@ postalall_form = h.renderable (nameable, itemtype, groupchoices, librarychoices)
     h.br()
     h.button ".btn.btn-inverse.done.pull-right", type:'button', "I'm done"
 
+link = h.renderable (url, txt) ->
+    h.raw "<a href=\"#{url}\">#{txt}</a>"
 
 root.widgets = 
     postalall_form: postalall_form
@@ -229,3 +232,4 @@ root.widgets =
     dropdown_submit: dropdown_submit
     one_submit_with_cb: one_submit_with_cb
     dropdown_submit_with_cb: dropdown_submit_with_cb
+    link: link

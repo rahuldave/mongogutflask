@@ -1,7 +1,7 @@
 root = exports ? this
 $=jQuery
 console.log "In Funcs"
-{renderable, ul, li, dl, dt, dd} = teacup
+{renderable, ul, li, dl, dt, dd, raw, br, strong} = teacup
 w = widgets
 
 format_tags = (tagtype, $sel, tags, tagqkey)->
@@ -106,12 +106,10 @@ get_taggings = (data) ->
     #console.log "HHHHH", stags[k], notes[k]
   return [stags, notes]
 
-add_libs_and_groups = (nick) ->
+get_groups = (nick, cback) ->
   $.get "/user/#{nick}/groupsuserisin", (data) ->
     groups=data.groups
-    $.get "/user/#{nick}/librariesuserisin", (data) ->
-      libs=data.libraries
-      return [groups, libs]
+    cback(groups)
 
 
 
@@ -151,6 +149,8 @@ postable_inviteds = (fqpn, data, template, scmode=false) ->
 
 
 postable_info_layout = renderable ({basic, owner}) ->
+  url= "/postable/#{basic.fqin}/filter/html"
+  a= "&nbsp;&nbsp;<a href=\"#{url}\">#{basic.fqin}</a>"
   dl '.dl-horizontal', ->
     dt "Description"
     dd basic.description
@@ -160,6 +160,9 @@ postable_info_layout = renderable ({basic, owner}) ->
     dd basic.creator
     dt "Created on"
     dd basic.whencreated
+  br()
+  strong "Items:"
+  raw a
 
 library_info_template = renderable (data) ->
   postable_info_layout data.library
@@ -261,7 +264,7 @@ root.get_tags = get_tags
 root.get_taggings = get_taggings
 root.format_items = format_items
 root.format_tags = format_tags
-root.add_libs_and_groups= add_libs_and_groups
+root.get_groups= get_groups
 root.format_stuff = format_stuff
 root.views = 
   library_info: postable_info

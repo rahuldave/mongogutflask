@@ -25,6 +25,14 @@ parse_userinfo = (data) ->
             name: data.user.basic.name
     return userdict
 
+make_postable_link = h.renderable (fqpn) ->
+    h.a href:"/postable/#{fqpn}/profile/html", ->
+        h.text fqpn
+    h.raw "&nbsp;("
+    h.a href:"/postable/#{fqpn}/filter/html", ->
+        h.text "items"
+    h.raw ")"
+
 class Postable extends Backbone.Model
 
 
@@ -40,7 +48,7 @@ class PostableView extends Backbone.View
         if @model.get('invite')
             @$el.html(w.table_from_dict_partial(@model.get('fqpn'), w.single_button('Yes')))
         else
-            content=w.one_col_table_partial(@model.get('fqpn'))
+            content=w.one_col_table_partial(make_postable_link(@model.get('fqpn')))
             console.log "CONTENT", content
             @$el.html(content)
         return this
@@ -55,7 +63,8 @@ class PostableView extends Backbone.View
             #replace by a div alert from bootstrap
             alert 'Did not succeed'
         console.log("GGG",@model, @$el)
-        syncs.accept_invitation(@model.get('nick'), @model.get('fqpn'), cback, eback)
+        usernick=@model.get('nick')
+        syncs.accept_invitation("adsgut/user:#{usernick}", @model.get('fqpn'), cback, eback)
 
 
 

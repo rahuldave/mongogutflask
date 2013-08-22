@@ -36,9 +36,11 @@ $ ->
   view=new views.InviteUser({postable: "{{ thelibrary.basic.fqin}}", withcb:true})
   $('div#invitedform').append(view.render().$el)
 
-  view=new views.AddGroup({postable: "{{ thelibrary.basic.fqin}}", groups:['rahuldave/group:ml','jayluker/group:sp'], withcb:true} )
-  $('div#invitedform').append(view.render().$el)
-  $('div#invitedform').show()
+  $.get "/user/{{useras.nick}}/groupsuserisin", (data) ->
+    groups=data.groups
+    view=new views.AddGroup({postable: "{{ thelibrary.basic.fqin}}", groups:groups, withcb:true} )
+    $('div#invitedform').append(view.render().$el)
+    $('div#invitedform').show()
   $.get "/library/{{ thelibrary.basic.fqin}}/inviteds", (data) ->
     content=views.postable_inviteds "{{ thelibrary.basic.fqin}}", data, templates.postable_inviteds, false
     $('div#inviteds').append(content)

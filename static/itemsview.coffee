@@ -75,8 +75,10 @@ class ItemView extends Backbone.View
     return this
 
   submitNote: =>
+    console.log "IN SUBMIT NOTE"
     item=@item.basic.fqin
     notetext= @$('.txt').val()
+    console.log notetext
     loc=window.location
     cback = (data) ->
         console.log "return data", data, loc
@@ -137,6 +139,7 @@ class ItemsView extends Backbone.View
         alert 'Did not succeed'
     syncs.save_items(@items, cback, eback)
     #SHOULD HAVE A TAB CLOSE
+    window.close()
     return false
 
   submitPosts: =>

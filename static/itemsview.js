@@ -65,8 +65,10 @@
 
     ItemView.prototype.submitNote = function() {
       var cback, eback, item, loc, notetext;
+      console.log("IN SUBMIT NOTE");
       item = this.item.basic.fqin;
       notetext = this.$('.txt').val();
+      console.log(notetext);
       loc = window.location;
       cback = function(data) {
         console.log("return data", data, loc);
@@ -159,6 +161,7 @@
         return alert('Did not succeed');
       };
       syncs.save_items(this.items, cback, eback);
+      window.close();
       return false;
     };
 

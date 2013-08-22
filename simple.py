@@ -232,7 +232,7 @@ def login():
         session['logged_in'] = True
         flash('You were logged in')
         return redirect(url_for('index'))
-    return render_template('login.html', error=error)
+    return render_template('login.html', error=error, useras=g.currentuser)
 
 @adsgut.route('/logout')
 def logout():
@@ -246,7 +246,7 @@ def logout():
 #x
 @adsgut.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', useras=g.currentuser)
 #x
 @adsgut.route('/all')
 def all():
@@ -272,7 +272,7 @@ def userInfo(nick):
 @adsgut.route('/user/<nick>/profile/html')
 def userProfileHtml(nick):
     user=g.db.getUserInfo(g.currentuser, nick)
-    return render_template('userprofile.html', theuser=user)
+    return render_template('userprofile.html', theuser=user, useras=g.currentuser)
 
 @adsgut.route('/user/<nick>/postablesuserisin')
 def postablesUserIsIn(nick):
@@ -603,16 +603,16 @@ def groupInfo(groupowner, groupname):
     return jsonify(group=postable(groupowner, groupname, "group")[0])
 
 #x
-@adsgut.route('/group/<groupowner>/group:<groupname>/profile/html')
+@adsgut.route('/postable/<groupowner>/group:<groupname>/profile/html')
 def groupProfileHtml(groupowner, groupname):
     group, owner=postable(groupowner, groupname, "group")
-    return render_template('groupprofile.html', thegroup=group, owner=owner)
+    return render_template('groupprofile.html', thegroup=group, owner=owner, useras=g.currentuser)
 
 @adsgut.route('/group/<groupowner>/group:<groupname>/filter/html')
 def groupFilterHtml(groupowner, groupname):
     querystring=request.query_string
     group, owner=postable(groupowner, groupname, "group")
-    return render_template('groupfilter.html', thegroup=group, querystring=querystring, owner=owner)
+    return render_template('groupfilter.html', thegroup=group, querystring=querystring, owner=owner, useras=g.currentuser)
 
 # @adsgut.route('/group/<groupowner>/group:<groupname>/items')
 # def groupItems(groupowner, groupname):
@@ -635,10 +635,10 @@ def appInfo(appowner, appname):
     return jsonify(app=postable(appowner, appname, "app")[0])
 
 #x
-@adsgut.route('/app/<appowner>/app:<appname>/profile/html')
+@adsgut.route('/postable/<appowner>/app:<appname>/profile/html')
 def appProfileHtml(appowner, appname):
     app, owner=postable(appowner, appname, "app")
-    return render_template('appprofile.html', theapp=app, owner=owner)
+    return render_template('appprofile.html', theapp=app, owner=owner, useras=g.currentuser)
 
 # @adsgut.route('/app/<appowner>/app:<appname>/items')
 # def appItems(appowner, appname):
@@ -661,16 +661,16 @@ def libraryInfo(libraryowner, libraryname):
     return jsonify(library=postable(libraryowner, libraryname, "library")[0])
 
 #x
-@adsgut.route('/library/<libraryowner>/library:<libraryname>/profile/html')
+@adsgut.route('/postable/<libraryowner>/library:<libraryname>/profile/html')
 def libraryProfileHtml(libraryowner, libraryname):
     library, owner=postable(libraryowner, libraryname, "library")
-    return render_template('libraryprofile.html', thelibrary=library, owner=owner)
+    return render_template('libraryprofile.html', thelibrary=library, owner=owner, useras=g.currentuser)
 
 @adsgut.route('/library/<libraryowner>/library:<libraryname>/filter/html')
 def libraryFilterHtml(libraryowner, libraryname):
     querystring=request.query_string
     library, owner=postable(libraryowner, libraryname, "library")
-    return render_template('libraryfilter.html', thelibrary=library, querystring=querystring, owner=owner)
+    return render_template('libraryfilter.html', thelibrary=library, querystring=querystring, owner=owner, useras=g.currentuser)
 
 
 @adsgut.route('/postable/<po>/<pt>:<pn>/filter/html')
