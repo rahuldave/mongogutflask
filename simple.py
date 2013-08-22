@@ -274,11 +274,22 @@ def userProfileHtml(nick):
     user=g.db.getUserInfo(g.currentuser, nick)
     return render_template('userprofile.html', theuser=user)
 
+@adsgut.route('/user/<nick>/postablesuserisin')
+def postablesUserIsIn(nick):
+    useras=g.db.getUserInfo(g.currentuser, nick)
+    allpostables=g.db.postablesForUser(g.currentuser, useras)
+    groups=[e['fqpn'] for e in allpostables if e['ptype']=='group']
+    libraries=[e['fqpn'] for e in allpostables if e['ptype']=='library']
+    apps=[e['fqpn'] for e in allpostables if e['ptype']=='app']
+    groups.remove("adsgut/group:public")
+    groups.remove(useras.nick+"/group:default")
+    return jsonify(groups=groups, libraries=libraries, apps=apps)
+
 #x
 @adsgut.route('/user/<nick>/groupsuserisin')
 def groupsUserIsIn(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    groups=g.db.postablesForUser(g.currentuser, useras, "group")
+    groups=[e['fqpn'] for e in g.db.postablesForUser(g.currentuser, useras, "group")]
     groups.remove("adsgut/group:public")
     groups.remove(useras.nick+"/group:default")
     return jsonify(groups=groups)
@@ -287,34 +298,35 @@ def groupsUserIsIn(nick):
 @adsgut.route('/user/<nick>/groupsuserowns')
 def groupsUserOwns(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    groups=g.db.ownerOfPostables(g.currentuser, useras, "group")
+    groups=[e['fqpn'] for e in g.db.ownerOfPostables(g.currentuser, useras, "group")]
     return jsonify(groups=groups)
 
 #x
 @adsgut.route('/user/<nick>/groupsuserisinvitedto')
 def groupsUserIsInvitedTo(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    groups=g.db.postableInvitesForUser(g.currentuser, useras, "group")
+    groups=[e['fqpn'] for e in g.db.postableInvitesForUser(g.currentuser, useras, "group")]
     return jsonify(groups=groups)
 
 #x
 @adsgut.route('/user/<nick>/appsuserisin')
 def appsUserIsIn(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    apps=g.db.postablesForUser(g.currentuser, useras, "app")
+    apps=[e['fqpn'] for e in g.db.postablesForUser(g.currentuser, useras, "app")]
     return jsonify(apps=apps)
 
+#BUG: not right
 @adsgut.route('/user/<nick>/appsusercanwriteto')
 def appsUserCanWriteTo(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    apps=g.db.postablesForUser(g.currentuser, useras, "app")
+    apps=[e['fqpn'] for e in g.db.postablesForUser(g.currentuser, useras, "app")]
     return jsonify(apps=apps)
 
 #x
 @adsgut.route('/user/<nick>/appsuserowns')
 def appsUserOwns(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    apps=g.db.ownerOfPostables(g.currentuser, useras, "app")
+    apps=[e['fqpn'] for e in g.db.ownerOfPostables(g.currentuser, useras, "app")]
     return jsonify(apps=apps)
 
 #use this for the email invitation?
@@ -322,7 +334,7 @@ def appsUserOwns(nick):
 @adsgut.route('/user/<nick>/appsuserisinvitedto')
 def appsUserIsInvitedTo(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    apps=g.db.postableInvitesForUser(g.currentuser, useras, "app")
+    apps=[e['fqpn'] for e in g.db.postableInvitesForUser(g.currentuser, useras, "app")]
     return jsonify(apps=apps)
 
 
@@ -330,20 +342,21 @@ def appsUserIsInvitedTo(nick):
 @adsgut.route('/user/<nick>/librariesuserisin')
 def librariesUserIsIn(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    libs=g.db.postablesForUser(g.currentuser, useras, "library")
+    libs=[e['fqpn'] for e in g.db.postablesForUser(g.currentuser, useras, "library")]
     return jsonify(libraries=libs)
 
+#BUG: not right
 @adsgut.route('/user/<nick>/librariesusercanwriteto')
 def librariesUserCanWriteTo(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    libs=g.db.postablesForUser(g.currentuser, useras, "library")
+    libs=[e['fqpn'] for e in g.db.postablesForUser(g.currentuser, useras, "library")]
     return jsonify(libraries=libs)
 
 #x
 @adsgut.route('/user/<nick>/librariesuserowns')
 def librariesUserOwns(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    libs=g.db.ownerOfPostables(g.currentuser, useras, "library")
+    libs=[e['fqpn'] for e in g.db.ownerOfPostables(g.currentuser, useras, "library")]
     return jsonify(libraries=libs)
 
 #use this for the email invitation?
@@ -351,7 +364,7 @@ def librariesUserOwns(nick):
 @adsgut.route('/user/<nick>/librariesuserisinvitedto')
 def librariesUserIsInvitedTo(nick):
     useras=g.db.getUserInfo(g.currentuser, nick)
-    libs=g.db.postableInvitesForUser(g.currentuser, useras, "library")
+    libs=[e['fqpn'] for e in g.db.postableInvitesForUser(g.currentuser, useras, "library")]
     return jsonify(libraries=libs)
 
 #BUG currentuser useras here?
@@ -747,6 +760,7 @@ def tagsUserAsMember(nick):
 
 
 #POST posts items into postable, get gets items for postable consistent with user.
+#ALL ITEMS in POST MUST BE OF SAME TYPE
 @adsgut.route('/postable/<pns>/<ptype>:<pname>/items', methods=['GET', 'POST'])
 def itemsForPostable(pns, ptype, pname):
     #userthere/[fqins]
@@ -754,12 +768,16 @@ def itemsForPostable(pns, ptype, pname):
     if request.method=='POST':
         jsonpost=dict(request.json)
         useras = _userpostget(g, jsonpost)
+        #henceforth this will be names
         items = _itemspostget(jsonpost)
-
+        itemtype=_dictp('itemtype', jsonpost)
         fqpn=pns+"/"+ptype+":"+upname
         pds=[]
-        for fqin in items:
-            i,pd=g.dbp.postItemIntoPostable(g.currentuser, useras, fqpn, fqin)
+        for name in items:
+            #doing this for its idempotency
+            itemspec={'name':name, 'itemtype':itemtype}
+            i=g.dbp.saveItem(g.currentuser, useras, itemspec)
+            i,pd=g.dbp.postItemIntoPostable(g.currentuser, useras, fqpn, i)
             pds.append(pd)
         itempostings={'status':'OK', 'postings':pds, 'postable':fqpn}
         return jsonify(itempostings)
@@ -872,16 +890,15 @@ def items():
     if request.method=='POST':
         jsonpost=dict(request.json)
         useras = _userpostget(g, jsonpost)
-        itspec={}
-        itspec['creator']=useras.basic.fqin
-        itspec['name'] = _dictp('name', jsonpost)
-        if not itspec['name']:
-            doabort("BAD_REQ", "No name specified for item")
-        itspec['itemtype'] = _dictp('itemtype', jsonpost)
-        if not itspec['itemtype']:
+        creator=useras.basic.fqin
+        items = _itemspostget(jsonpost)
+        itemtype = _dictp('itemtype', jsonpost)
+        if not itemtype:
             doabort("BAD_REQ", "No itemtype specified for item")
-        newitem=g.dbp.saveItem(g.currentuser, useras, itspec)
-        return jsonify({'status':'OK', 'info':newitem})
+        for name in items:
+            itspec={'creator':creator, 'name':name, 'itemtype':itemtype}
+            newitem=g.dbp.saveItem(g.currentuser, useras, itspec)
+        return jsonify({'status':'OK', 'info':items})
     else:
         query=dict(request.args)
         useras, usernick=_userget(g, query)
@@ -921,7 +938,7 @@ def tags():
                 tagspec['name'] = ti['name']
             tagspec['tagtype'] = ti['tagtype']
             t=g.dbp.makeTag(g.currentuser, useras, tagspec)
-            newtags.append[t]
+            newtags.append(t)
 
         #returning the taggings requires a commit at this point
         tags={'status':'OK', 'info':{'item': i.basic.fqin, 'tags':[td for td in newtags]}}
@@ -940,7 +957,7 @@ def tags():
 #GET tags for an item or POST: tagItem
 #Currently GET coming from taggingdocs: BUG: not sure of this
 
-def _setupTagspec(ti):
+def _setupTagspec(ti, useras):
     #atleast one of name or content must be there (tag or note)
     if not (ti.has_key('name') or ti.has_key('content')):
         doabort('BAD_REQ', "No name or content specified for tag")
@@ -963,13 +980,18 @@ def tagsForItem(ns, itemname):
     if request.method == 'POST':
         jsonpost=dict(request.json)
         useras = _userpostget(g, jsonpost)
-        item=g.dbp._getItem(g.currentuser, ifqin)
+        itemtype=_dictp('itemtype', jsonpost)
+        itemspec={'name':itemname, 'itemtype':itemtype}
+        #KEY:IF i have a item it must exist, so this one is NOT used for items not yet there
+        #i=g.dbp._getItem(g.currentuser, ifqin)
+        i=g.dbp.saveItem(g.currentuser, useras, itemspec)
         tagspecs=_tagspecsget(jsonpost)
         newtaggings=[]
         for ti in tagspecs:
-            tagspec=_setupTagspec(ti)
-            i,t,td=g.dbp.tagItem(g.currentuser, useras, item.basic.fqin, tagspec)
-            newtaggings.append[td]
+            tagspec=_setupTagspec(ti, useras)
+            print "TAGSPEC IS", tagspec
+            i,t,td=g.dbp.tagItem(g.currentuser, useras, i, tagspec)
+            newtaggings.append(td)
 
         #returning the taggings requires a commit at this point
         taggings={'status':'OK', 'info':{'item': i.basic.fqin, 'tagging':[td for td in newtaggings]}}
@@ -1000,15 +1022,18 @@ def itemsTaggings():
     if request.method=='POST':
         jsonpost=dict(request.json)
         useras = _userpostget(g, jsonpost)
-        fqins = _itemspostget(jsonpost)
+        items = _itemspostget(jsonpost)
         tagspecs=_tagspecsget(jsonpost)
+        itemtype=_dictp('itemtype', jsonpost)
         newtaggings=[]
-        for fqin in fqins:
+        for name in items:
+            itemspec={'name':name, 'itemtype':itemtype}
+            i=g.dbp.saveItem(g.currentuser, useras, itemspec)
             for ti in tagspecs:
-                tagspec=_setupTagspec(ti)
-                i,t,td=g.dbp.tagItem(g.currentuser, useras, fqin, tagspec)
-                newtaggings.append[td]
-        itemtaggings={'status':'OK', 'taggings':tds}
+                tagspec=_setupTagspec(ti, useras)
+                i,t,td=g.dbp.tagItem(g.currentuser, useras, i, tagspec)
+                newtaggings.append(td)
+        itemtaggings={'status':'OK', 'taggings':newtaggings}
         return jsonify(itemtaggings)
     else:
         query=dict(request.args)
@@ -1030,12 +1055,15 @@ def itemsPostings():
     if request.method=='POST':
         jsonpost=dict(request.json)
         useras = _userpostget(g, jsonpost)
-        fqins = _itemspostget(jsonpost)
+        items = _itemspostget(jsonpost)
         fqpns = _postablesget(jsonpost)
+        itemtype=_dictp('itemtype', jsonpost)
         pds=[]
-        for fqin in fqins:
-            for fqpn in fqpns:
-                i,pd=g.dbp.postItemIntoPostable(g.currentuser, useras, fqpn, fqin)
+        for name in items:
+            itemspec={'name':name, 'itemtype':itemtype}
+            i=g.dbp.saveItem(g.currentuser, useras, itemspec)
+            for fqpn in fqpns:                
+                i,pd=g.dbp.postItemIntoPostable(g.currentuser, useras, fqpn, i)
                 pds.append(pd)
         itempostings={'status':'OK', 'postings':pds}
         return jsonify(itempostings)
@@ -1060,7 +1088,7 @@ def itemsTaggingsAndPostings():
     else:
         query=dict(request.args)
         useras, usernick=_userget(g, query)
-        print 'AAAQUERY', query, request.args
+        #print 'AAAQUERY', query, request.args
         #need to pop the other things like pagetuples etc. Helper funcs needed
         sort = _sortget(query)
         items = _itemsget(query)
@@ -1069,7 +1097,7 @@ def itemsTaggingsAndPostings():
             items, sort)
         taggingsdict=g.dbp.getTaggingsConsistentWithUserAndItems(g.currentuser, useras,
             items, sort)
-        print taggingsdict, postingsdict
+        #print "MEEP",taggingsdict, postingsdict
         return jsonify(postings=postingsdict, taggings=taggingsdict)
 
 @adsgut.route('/itemtypes', methods=['POST', 'GET'])
@@ -1172,7 +1200,7 @@ def postForm(itemtypens, itemtypename):
             nameable=True  
         if nameable and singlemode:
             nameable=True
-        return render_template('postform1.html', items=theitems, 
+        return render_template('postform2.html', items=theitems, 
                 querystring=querystring, 
                 singlemode=singlemode,
                 nameable=nameable,

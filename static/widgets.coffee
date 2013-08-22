@@ -137,12 +137,17 @@ single_button_label = h.renderable (ltext, btext) ->
 #   </label>
 # </div>
 
-postalnote_form = h.renderable () ->
-    h.div ".control-group.postalnote", ->
-        h.textarea ".controls.input-xlarge", type:"text", rows:'2', placeholder:"Type a note"
-        h.label ".checkbox.control-label", ->
-            h.input ".controls", type:'checkbox'
-            h.text "Make note Private"
+postalnote_form = h.renderable (htmlstring, additional, btext) ->
+    #h.div ".control-group.postalnote", ->
+    h.raw htmlstring
+    h.br()
+    h.raw additional
+    h.textarea ".controls.input-xlarge.txt", type:"text", rows:'2', placeholder:"Type a note"
+    h.label ".control-label", ->
+        h.input ".control.cb", type:'checkbox'
+        h.text "note private?"
+        h.raw "&nbsp;&nbsp;"
+    h.button '.btn.btn-primary.btn-mini.notebtn', type:'button', btext
 
 #     <legend>Tagging and Posting</legend>
 #     {% if nameable %}
@@ -170,9 +175,14 @@ postalnote_form = h.renderable () ->
 #     </div>
 #     <button type="submit" class="btn">Submit</button>
 
+multiselect = h.renderable (daclass, choices) -> 
+    h.select ".multi#{daclass}", multiple:"multiple", ->
+        for c in choices
+            h.option c
 
-postalall_form = h.renderable (nameable, itemtype) ->
-    h.legend "Tagging and Posting"
+#this should not be here. it should be built up hierarchically from other widgets and should itself be in views.
+postalall_form = h.renderable (nameable, itemtype, groupchoices, librarychoices) ->
+    h.legend "Post ALL"
     if nameable
         h.div ".control-group", ->
             h.label ".control-label", "Name this #{itemtype}"
@@ -183,14 +193,22 @@ postalall_form = h.renderable (nameable, itemtype) ->
             h.text "Make Public"
     h.div ".control-group", ->
         h.label ".control-label", "Libraries"
-        h.input ".controls.librariesinput.input-xxlarge", type:"text", placeholder:"Lib names, comma separated" 
+        #h.input ".controls.librariesinput.input-xxlarge", type:"text", placeholder:"Lib names, comma separated" 
+        multiselect("library", librarychoices)
     h.div ".control-group", ->
         h.label ".control-label", "Groups"
-        h.input ".controls.groupsinput.input-xxlarge", type:"text", placeholder:"Grp names, comma separated"
-    h.div ".control-group", ->
-        h.label ".control-label", "Tags"
-        h.input ".controls.tagsinput.input-xxlarge", type:"text", placeholder:"Tag names, comma separated"
-    h.button ".btn.btn-primary", type:'button', "Save"
+        #h.input ".controls.groupsinput.input-xxlarge", type:"text", placeholder:"Grp names, comma separated"
+        multiselect("group",groupchoices)
+    h.button ".btn.btn-primary.post", type:'button', "Post"
+    h.br()
+    h.br()
+    h.legend "Tag ALL"
+    #h.div ".control-group", ->
+        #h.label ".control-label", "Tags"
+    h.input ".controls.tagsinput.input-xxlarge", type:"text", placeholder:"Tag names, comma separated"
+    h.button ".btn.btn-primary.tag", type:'button', "Tag"
+    h.br()
+    h.button ".btn.btn-inverse.done.pull-right", type:'button', "I'm done"
 
 
 root.widgets = 

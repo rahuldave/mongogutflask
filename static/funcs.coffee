@@ -30,7 +30,7 @@ format_tags = (tagtype, $sel, tags, tagqkey)->
   $sel.html(htmlstring)
 
 
-format_notes_for_item = (fqin, notes) ->
+format_notes_for_item = (fqin, notes, nick) ->
   t3list=("<span>#{t}</span><br/>" for t in notes[fqin])
   if t3list.length >0
     return "<p>Notes:<br/>"+t3list.join("<br/>")+"</p>"
@@ -51,11 +51,21 @@ format_postings_for_item = (fqin, postings, nick) ->
   else
     return ""
 
+format_stuff = (fqin, nick, stags, postings, notes) ->
+  htmlstring= ""
+  htmlstring= htmlstring+format_tags_for_item(fqin, stags, nick)
+  htmlstring= htmlstring+format_postings_for_item(fqin, postings, nick)
+  htmlstring= htmlstring+format_notes_for_item(fqin, notes, nick)
+  return htmlstring
+
 format_items = ($sel, nick, items, count, stags, notes, postings, formatter, asform=false) ->
+  console.log "HTML", $sel.html()
   adslocation = "http://labs.adsabs.harvard.edu/adsabs/abs/"
   htmlstring = ""
+  console.log items.length, "ITTABITTA", (i.basic.fqin for i in items), "}}"
   for i in items
     fqin=i.basic.fqin
+    #console.log "whatsup", fqin, items.length, $sel, htmlstring
     url=adslocation + "#{i.basic.name}"
     htmlstring = htmlstring + "<#{formatter}><a href=\"#{url}\">#{i.basic.name}</a><br/>"
     htmlstring=htmlstring+format_tags_for_item(fqin, stags, nick)
@@ -63,9 +73,8 @@ format_items = ($sel, nick, items, count, stags, notes, postings, formatter, asf
     htmlstring=htmlstring+format_notes_for_item(fqin, notes, nick)  
     htmlstring=htmlstring+"</#{formatter}>"
     if asform
-      htmlstring=htmlstring+w.postalnote_form()
-
-    $sel.prepend(htmlstring)
+      htmlstring=htmlstring+w.postalnote_form("make note")
+  $sel.append(htmlstring)
   $('#breadcrumb').append("#{count} items")
 
 get_tags = (tags, tqtype) ->
@@ -85,6 +94,7 @@ get_tags = (tags, tqtype) ->
 get_taggings = (data) ->
   stags={}
   notes={}
+  console.log "DATA", data
   for own k,v of data.taggings
     #console.log "1>>>", k,v[0], v[1]
     if v[0] > 0
@@ -96,11 +106,12 @@ get_taggings = (data) ->
     #console.log "HHHHH", stags[k], notes[k]
   return [stags, notes]
 
-add_libs_and_groups = ($libsel, $groupsel, nick) ->
+add_libs_and_groups = (nick) ->
   $.get "/user/#{nick}/groupsuserisin", (data) ->
-    $groupsel.append("<span> (in #{data.groups.join(',')})</span>")
-  $.get "/user/#{nick}/librariesuserisin", (data) ->
-    $libsel.append("<span> (in #{data.libraries.join(',')})</span>")
+    groups=data.groups
+    $.get "/user/#{nick}/librariesuserisin", (data) ->
+      libs=data.libraries
+      return [groups, libs]
 
 
 
@@ -251,6 +262,7 @@ root.get_taggings = get_taggings
 root.format_items = format_items
 root.format_tags = format_tags
 root.add_libs_and_groups= add_libs_and_groups
+root.format_stuff = format_stuff
 root.views = 
   library_info: postable_info
   group_info: postable_info

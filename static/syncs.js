@@ -34,7 +34,7 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
 
 
 (function() {
-  var $, accept_invitation, add_group, change_ownership, doajax, h, invite_user, root, send_params, toggle_rw;
+  var $, accept_invitation, add_group, change_ownership, do_get, doajax, get_postables, h, invite_user, root, save_items, send_params, submit_note, submit_posts, submit_tags, toggle_rw;
 
   root = typeof exports !== "undefined" && exports !== null ? exports : this;
 
@@ -54,6 +54,18 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
       url: url,
       data: JSON.stringify(data),
       contentType: "application/json",
+      success: cback,
+      error: eback
+    };
+    return xhr = doajax(params);
+  };
+
+  do_get = function(url, cback, eback) {
+    var params, xhr;
+    params = {
+      type: 'GET',
+      dataType: 'json',
+      url: url,
       success: cback,
       error: eback
     };
@@ -111,12 +123,124 @@ Type: Function( PlainObject data, String textStatus, jqXHR jqXHR )
     return send_params(url, data, cback, eback);
   };
 
+  get_postables = function(user, cback, eback) {
+    var nick, url;
+    nick = user;
+    url = "/user/" + nick + "/postablesuserisin";
+    return do_get(url, cback, eback);
+  };
+
+  submit_note = function(item, note, cback, eback) {
+    var data, itemtype, tagtype, url;
+    tagtype = "ads/tagtype:note";
+    itemtype = "ads/itemtype:pub";
+    url = "/tags/" + item;
+    data = {
+      tagspecs: [
+        {
+          content: note,
+          tagtype: tagtype
+        }
+      ],
+      itemtype: itemtype
+    };
+    if (note === !"") {
+      return send_params(url, data, cback, eback);
+    }
+  };
+
+  submit_tags = function(items, tags, cback, eback) {
+    var data, i, itemnames, itemtype, tag, tagtype, url;
+    tagtype = "ads/tagtype:tag";
+    itemtype = "ads/itemtype:pub";
+    itemnames = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = items.length; _i < _len; _i++) {
+        i = items[_i];
+        _results.push(i.basic.name);
+      }
+      return _results;
+    })();
+    url = "/items/taggings";
+    console.log("TAGS ARE", tags);
+    if (tags.length > 0) {
+      data = {
+        tagspecs: (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = tags.length; _i < _len; _i++) {
+            tag = tags[_i];
+            _results.push({
+              name: tag,
+              tagtype: tagtype
+            });
+          }
+          return _results;
+        })(),
+        itemtype: itemtype,
+        items: itemnames
+      };
+      return send_params(url, data, cback, eback);
+    }
+  };
+
+  submit_posts = function(items, postables, cback, eback) {
+    var data, i, itemnames, itemtype, url;
+    itemtype = "ads/itemtype:pub";
+    console.log(items, '|||');
+    itemnames = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = items.length; _i < _len; _i++) {
+        i = items[_i];
+        _results.push(i.basic.name);
+      }
+      return _results;
+    })();
+    url = "/items/postings";
+    if (postables.length > 0) {
+      data = {
+        postables: postables,
+        itemtype: itemtype,
+        items: itemnames
+      };
+      return send_params(url, data, cback, eback);
+    }
+  };
+
+  save_items = function(items, cback, eback) {
+    var data, i, itemnames, itemtype, url;
+    itemtype = "ads/itemtype:pub";
+    console.log(items, '|||');
+    itemnames = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = items.length; _i < _len; _i++) {
+        i = items[_i];
+        _results.push(i.basic.name);
+      }
+      return _results;
+    })();
+    url = "/items";
+    data = {
+      items: itemnames,
+      itemtype: itemtype
+    };
+    return send_params(url, data, cback, eback);
+  };
+
   root.syncs = {
     accept_invitation: accept_invitation,
     invite_user: invite_user,
     add_group: add_group,
     change_ownership: change_ownership,
-    toggle_rw: toggle_rw
+    toggle_rw: toggle_rw,
+    get_postables: get_postables,
+    submit_note: submit_note,
+    submit_tags: submit_tags,
+    submit_posts: submit_posts,
+    save_items: save_items
   };
 
 }).call(this);

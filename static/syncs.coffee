@@ -46,6 +46,15 @@ send_params = (url, data, cback, eback) ->
         error:eback
     xhr=doajax(params)
 
+do_get = (url, cback, eback) ->
+    params=
+        type:'GET'
+        dataType:'json'
+        url:url
+        success:cback
+        error:eback
+    xhr=doajax(params)
+
 change_ownership = (fqmn, fqpn, cback, eback) ->
     url= "/postable/"+fqpn+"/changes"
     data=
@@ -82,12 +91,70 @@ add_group = (selectedgrp, postable, changerw, cback, eback) ->
         changerw:changerw
     send_params(url, data, cback, eback)
 
+get_postables = (user, cback, eback) ->
+    #bug:possibly buggy split
+    #ary=user.split(':')
+    #nick=ary[ary.length-1]
+    nick=user
+    url= "/user/"+nick+"/postablesuserisin"
+    do_get(url, cback, eback)
+
+submit_note = (item, note, cback, eback) ->
+    tagtype= "ads/tagtype:note"
+    itemtype= "ads/itemtype:pub"
+    url= "/tags/"+item
+    data=
+        tagspecs:[{content:note, tagtype:tagtype}]
+        itemtype:itemtype
+    if note is not ""
+        send_params(url, data, cback, eback)
+
+submit_tags = (items, tags, cback, eback) ->
+    tagtype= "ads/tagtype:tag"
+    itemtype= "ads/itemtype:pub"
+    itemnames= (i.basic.name for i in items)
+    url= "/items/taggings"
+    console.log "TAGS ARE", tags
+    if tags.length >0
+        data=
+            tagspecs:({name:tag, tagtype:tagtype} for tag in tags)
+            itemtype:itemtype
+            items:itemnames
+        send_params(url, data, cback, eback)
+
+submit_posts = (items, postables, cback, eback) ->
+    itemtype= "ads/itemtype:pub"
+    console.log items, '|||'
+    itemnames= (i.basic.name for i in items)
+    url= "/items/postings"
+    if postables.length >0
+        data=
+            postables:postables
+            itemtype:itemtype
+            items:itemnames
+        send_params(url, data, cback, eback)
+
+save_items = (items, cback, eback) ->
+    itemtype= "ads/itemtype:pub"
+    console.log items, '|||'
+    itemnames= (i.basic.name for i in items)
+    url= "/items"
+    data=
+        items:itemnames
+        itemtype:itemtype
+    send_params(url, data, cback, eback)
+
 root.syncs=
     accept_invitation: accept_invitation
     invite_user: invite_user
     add_group: add_group
     change_ownership: change_ownership
     toggle_rw: toggle_rw
+    get_postables: get_postables
+    submit_note:submit_note
+    submit_tags:submit_tags
+    submit_posts:submit_posts
+    save_items:save_items
 
 
 

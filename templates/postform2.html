@@ -1,7 +1,7 @@
-{% extends "layout.html" %}
+{% extends "layoutnocol.html" %}
 {% block body %}
   <div id="items" class="row">
-      <div class="span5 items"></div>
+      <div class="span8 items"></div>
       <div class="span4 ctrls"></div>
   </div>
 {% endblock %}
@@ -35,11 +35,17 @@ $ ->
           postings[k]=(e.thething.postfqin for e in v[1])
         else
           postings[k]=[]
-        
-      format_items $('#items .items'), "{{useras.nick}}", theitems, thecount, stags, notes, postings, "div", true
-    $.get "/user/{{useras.nick}}/groupsuserisin", (data) ->
-      groups=data.groups
-      $.get "/user/{{useras.nick}}/librariesuserisin", (data2) ->
-        libs=data2.libraries
-        $('#items .ctrls').append(widgets.postalall_form(nam,'{{itemtype}}', groups, libs))      
+      #{@stags, @notes, @$el, @postings, @memberable, @items, @nameable, @itemtype}
+      ido=
+        stags:stags
+        postings:postings
+        notes:notes
+        $el:$('#items')
+        items: theitems
+        nameable: nam
+        itemtype:'{{itemtype}}'
+        memberable:'{{useras.nick}}'
+
+      plinv=new itemsdo.ItemsView(ido)
+      plinv.render()
 {% endblock %}
