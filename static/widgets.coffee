@@ -137,13 +137,13 @@ single_button_label = h.renderable (ltext, btext) ->
 #     <input type=\"checkbox\" class=\"controls\"> Make Private
 #   </label>
 # </div>
-
-postalnote_form = h.renderable (htmlstring, additional, btext) ->
+#postalnote_form = h.renderable (htmlstring, additional, btext, nrows=2) ->
+postalnote_form = h.renderable (btext, nrows=2) ->
     #h.div ".control-group.postalnote", ->
-    h.raw htmlstring
-    h.br()
-    h.raw additional
-    h.textarea ".controls.input-xlarge.txt", type:"text", rows:'2', placeholder:"Type a note"
+    #h.raw htmlstring
+    #h.br()
+    #h.raw additional
+    h.textarea ".controls.input-xlarge.txt", type:"text", rows:'#{nrows}', placeholder:"Type a note"
     h.label ".control-label", ->
         h.input ".control.cb", type:'checkbox'
         h.text "note private?"

@@ -236,13 +236,13 @@
     }, btext);
   });
 
-  postalnote_form = h.renderable(function(htmlstring, additional, btext) {
-    h.raw(htmlstring);
-    h.br();
-    h.raw(additional);
+  postalnote_form = h.renderable(function(btext, nrows) {
+    if (nrows == null) {
+      nrows = 2;
+    }
     h.textarea(".controls.input-xlarge.txt", {
       type: "text",
-      rows: '2',
+      rows: '#{nrows}',
       placeholder: "Type a note"
     });
     h.label(".control-label", function() {

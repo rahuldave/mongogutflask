@@ -66,11 +66,14 @@ class ItemView extends Backbone.View
     url=adslocation + "#{@item.basic.name}"
     htmlstring = "<a href=\"#{url}\">#{@item.basic.name}</a>"
     fqin=@item.basic.fqin
+    content = ''
+    content = content + htmlstring
     additional= format_stuff(fqin, @memberable, cdict(fqin,@stags), cdict(fqin,@postings), cdict(fqin,@notes))
-    content = w.postalnote_form(htmlstring, additional, "make note")
+    content = content + additional
+    content = content + w.postalnote_form("make note")
     #content = w.table_from_dict_partial(@memberable, w.single_button_label(@rwmode, "Toggle"))
     #dahtml= "<td>a</td><td>b</td>"
-    console.log 'rendering', @$el, content
+    #console.log 'rendering', @$el, content
     @$el.append(content)
     return this
 
@@ -185,6 +188,32 @@ class ItemsView extends Backbone.View
         alert 'Did not succeed'
     syncs.submit_tags(@items, tags, cback, eback)
     return false
+
+#now create an itemsview for the filter page
+class ItemsFilterView extends Backbone.View
+
+  initialize: (options) ->
+    {@stags, @notes, @$el, @postings, @memberable, @items, @nameable, @itemtype} = options
+    console.log "ITEMS", @items
+
+  render: =>
+    console.log "EL", @$el
+    for i in @items
+        fqin=i.basic.fqin
+        ins = 
+            stags: @stags[fqin]
+            notes: @notes[fqin]
+            postings: @postings[fqin]
+            item: i
+            memberable: @memberable
+        console.log "INS", ins
+        v=new ItemView(ins)
+        @$el.append(v.render().el)
+
+    return this
+
+
 root.itemsdo=
     ItemView: ItemView
     ItemsView: ItemsView
+    ItemsFilterView: ItemsFilterView
